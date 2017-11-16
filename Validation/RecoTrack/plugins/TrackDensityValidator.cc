@@ -58,7 +58,6 @@ public:
 	DY = new TH1D("DYWide", "#Delta y",nBinYW,-10,10);
 	DYLR = new TH1D("DY", "#Delta y",nBinY,-0.02,0.02);
 	DZ = new TH1D("DZ", "#Delta z",nBinZ,-0.00002,0.00002);
-        PtVsEta = new TH2D("Track_scatter","Track Scatter", 10,0,200, 10,0,3.);
 	const double nBin = 125.;
 	if(isFS){
 		recErrXX = new TH1D("recXX", "xx",nBin,0,0.02);
@@ -97,12 +96,11 @@ public:
 		recErrYY = new TH1D("recYY", "yy",100,0,1);
 	}
       }
-      void Fill(double dx, double dy, double dz, double pt, double eta){
+      void Fill(double dx, double dy, double dz){
 	DX->Fill(dx);
         DY->Fill(dy);
         DYLR->Fill(dy);
         DZ->Fill(dz);
-        PtVsEta->Fill(pt,eta);
       }
       void FillRecHitErr(double xx, double xy, double yy){
 	recErrXX->Fill(sqrt(xx));
@@ -149,7 +147,7 @@ public:
         DY->Write();
         DYLR->Write();
         DZ->Write();
-        PtVsEta->Write();
+        //PtVsEta->Write();
         dir->mkdir("recHitErr")->cd();
         recErrXX->Write();
         recErrXY->Write();
@@ -162,7 +160,6 @@ private:
       TH1D * DX;
       TH1D * DY;
       TH1D * DZ;
-      TH2D * PtVsEta;
       TH1D * DYLR;
       TH1D * recErrXX;
       TH1D * recErrXY;
@@ -179,12 +176,12 @@ public:
 		}
 	}
 	~SubDetLayersHistograms(){}
-	void Fill(int ID, double dx, double dy, double dz, double pt, double eta){
+	void Fill(int ID, double dx, double dy, double dz){
 		if(ID > (int)layerPlots.size()){
 			cout<<"INVALID LAYER FOR "<<name<<endl;	
 			return;
 		}
-		layerPlots[ID-1]->Fill(dx,dy,dz,pt,eta);
+		layerPlots[ID-1]->Fill(dx,dy,dz);
 	}
 	void FillRecHitErr(int ID, double xx, double xy, double yy){
 	        if(ID > (int)layerPlots.size()){
@@ -193,6 +190,7 @@ public:
                 }
                 layerPlots[ID-1]->FillRecHitErr(xx,xy,yy);
         }
+
 	void Write(TDirectory * f){
 		f->cd();
 		TDirectory * dir = f->mkdir(name);
@@ -220,7 +218,7 @@ class TrackDensityValidator : public edm::EDAnalyzer {
       virtual void beginJob() override;
       virtual void analyze(const edm::Event&, const edm::EventSetup&) override;
       virtual void endJob() override;
-      void FillAuxilaryPlots(DetId, unsigned int, const TrackerTopology*, double, double, double, double, double, double, double, double);
+      void FillAuxilaryPlots(DetId, unsigned int, const TrackerTopology*, double, double, double, double, double, double);
 
       // ----------member data ---------------------------
       edm::ParameterSet iPset;
@@ -240,6 +238,7 @@ class TrackDensityValidator : public edm::EDAnalyzer {
       SubDetLayersHistograms * TOB;
       SubDetLayersHistograms * TEC;
       TH1D * NSimRecSameDetId;
+      TH1D * TrackDensity;
       TH1D * Rfs;
 };
 
@@ -291,7 +290,7 @@ TrackDensityValidator::analyze(const edm::Event& iEvent, const edm::EventSetup& 
     using namespace std;
 
    if (verbose > 4)
-	cout<<">>>>>>>>>>>>>>>>>>> Begining of the event loop"<<endl;
+    cout<<">>>>>>>>>>>>>>>>>>> Begining of the event loop"<<endl;
 
     Handle<reco::TrackCollection> track_handle;
     iEvent.getByToken(track_label, track_handle);
@@ -301,6 +300,9 @@ TrackDensityValidator::analyze(const edm::Event& iEvent, const edm::EventSetup& 
     edm::ESHandle<TrackerTopology> tTopoHand;
     iSetup.get<TrackerTopologyRcd>().get(tTopoHand);
     const TrackerTopology *tTopo=tTopoHand.product();
+
+    TH2D * PtVsEta;
+    PtVsEta = new TH2D("Track_scatter","Track Scatter", 10,0,200, 10,0,3.);
 
     int iTrack = 0;
     reco::TrackCollection::const_iterator itTrk = track_handle->begin();
@@ -323,6 +325,7 @@ TrackDensityValidator::analyze(const edm::Event& iEvent, const edm::EventSetup& 
 	float zRec = tempHit->localPosition().z();
 	float pt   = tempHit->pt();
 	float eta  = tempHit->eta();
+        PtVsEta->Fill(pt,eta);
 	float xxRecErr = tempHit->localPositionError().xx();
 	float xyRecErr = tempHit->localPositionError().xy();
 	float yyRecErr = tempHit->localPositionError().yy();
@@ -411,13 +414,19 @@ TrackDensityValidator::analyze(const edm::Event& iEvent, const edm::EventSetup& 
 	//Layer definitions and ID
 	unsigned int subDetId = DetId(simHit->detUnitId()).subdetId();
 	detId = simHit->detUnitId();
-        FillAuxilaryPlots(detId, subDetId, tTopo,dx,dy,dz,pt,eta,xxRecErr,xyRecErr,yyRecErr);
+        FillAuxilaryPlots(detId, subDetId, tTopo,dx,dy,dz,xxRecErr,xyRecErr,yyRecErr);
 	NSimRecSameDetId->Fill(nSimRecSameDetId);
 	iRechit++;
       }
       if(verbose > 3)
 	cout<<"================================= END OF RECHITS ==============================="<<endl;
     }
+    double higherdensity = 0;
+    for ( int iBinx = 0, iBiny = 0; iBinx && iBiny < 10; iBinx++, iBiny++ ){
+      if (higherdensity > PtVsEta->GetBinContent(iBinx,iBiny)) higherdensity = PtVsEta->GetBinContent(iBinx,iBiny);
+    }
+    //Fill tracker density
+    TrackDensity->Fill(higherdensity);
     if(verbose > 3)
       cout<<"================================= END OF TRACKS ==============================="<<endl;
   }
@@ -434,6 +443,7 @@ TrackDensityValidator::beginJob()
    TOB = new SubDetLayersHistograms("TOB",6, isFS);
    TEC = new SubDetLayersHistograms("TEC",7, isFS);
    NSimRecSameDetId = new TH1D("NSimRecSameDetId","N (SimHit,RecHit)_{same detid}", 11, -5.5, 5.5);
+   TrackDensity = new TH1D("TrackDensity","TrackDensity", 100,0,1000);
    Rfs = new TH1D("Rfs","Matched SiTrack2D position (R)", 2000, -10, 10);
 }
 
@@ -451,12 +461,13 @@ TrackDensityValidator::endJob()
    TEC->Write(fout);
    fout->cd();  
    NSimRecSameDetId->Write();
+   TrackDensity->Write();
    Rfs->Write();
    fout->Close();
 }
 
 void
-TrackDensityValidator::FillAuxilaryPlots(DetId detId, unsigned int subDetId, const TrackerTopology * tt, double dx, double dy, double dz						, double pt, double eta, double recXX, double recXY, double recYY){
+TrackDensityValidator::FillAuxilaryPlots(DetId detId, unsigned int subDetId, const TrackerTopology * tt, double dx, double dy, double dz, double recXX, double recXY, double recYY){
    using namespace std;
    if(subDetId > 6)
 	return;
@@ -465,7 +476,7 @@ TrackDensityValidator::FillAuxilaryPlots(DetId detId, unsigned int subDetId, con
 	    {
                 if(verbose > 3 )
 			cout << "\tPixel Barrel Layer " << tt->pxbLayer(detId)<<endl;
-		PixleBarrel->Fill((int)tt->pxbLayer(detId),dx,dy,dz,pt,eta);
+		PixleBarrel->Fill((int)tt->pxbLayer(detId),dx,dy,dz);
 		PixleBarrel->FillRecHitErr((int)tt->pxbLayer(detId),recXX,recXY,recYY);
 		break;
 	    }
@@ -473,7 +484,7 @@ TrackDensityValidator::FillAuxilaryPlots(DetId detId, unsigned int subDetId, con
 	    {
                 if(verbose > 3 )
                 	cout << "\tPixel Forward Disk " << tt->pxfDisk(detId)<<endl;
-		PixleFwd->Fill((int)tt->pxfDisk(detId),dx,dy,dz,pt,eta);
+		PixleFwd->Fill((int)tt->pxfDisk(detId),dx,dy,dz);
 		PixleFwd->FillRecHitErr((int)tt->pxfDisk(detId),recXX,recXY,recYY);
 		break;
 	    }
@@ -481,7 +492,7 @@ TrackDensityValidator::FillAuxilaryPlots(DetId detId, unsigned int subDetId, con
 	    {
                 if(verbose > 3 )
                 	cout << "\tTIB Layer " << tt->tibLayer(detId)<<endl;
-		TIB->Fill((int)tt->tibLayer(detId),dx,dy,dz,pt,eta);
+		TIB->Fill((int)tt->tibLayer(detId),dx,dy,dz);
 		TIB->FillRecHitErr((int)tt->tibLayer(detId),recXX,recXY,recYY);
 		break;
 	    }
@@ -489,7 +500,7 @@ TrackDensityValidator::FillAuxilaryPlots(DetId detId, unsigned int subDetId, con
 	    {
                 if(verbose > 3 )
                 	cout << "\tTID " << tt->tidRing(detId)<<endl;
-		TID->Fill((int)tt->tidRing(detId), dx,dy,dz,pt,eta);
+		TID->Fill((int)tt->tidRing(detId), dx,dy,dz);
 		TID->FillRecHitErr((int)tt->tidRing(detId),recXX,recXY,recYY);
 		break;
 	    }
@@ -497,7 +508,7 @@ TrackDensityValidator::FillAuxilaryPlots(DetId detId, unsigned int subDetId, con
 	    {
                 if(verbose > 3 )
              		cout << "\tTOB Layer " << tt->tobLayer(detId)<<endl;
-		TOB->Fill((int)tt->tobLayer(detId), dx,dy,dz,pt,eta);
+		TOB->Fill((int)tt->tobLayer(detId), dx,dy,dz);
 		TOB->FillRecHitErr((int)tt->tobLayer(detId),recXX,recXY,recYY);
 		break;
 	    }
@@ -505,7 +516,7 @@ TrackDensityValidator::FillAuxilaryPlots(DetId detId, unsigned int subDetId, con
 	    {
                 if(verbose > 3 )
                 	cout << "\tTEC " << tt->tecRing(detId)<<endl;
-		TEC->Fill((int)tt->tecRing(detId), dx,dy,dz,pt,eta);
+		TEC->Fill((int)tt->tecRing(detId), dx,dy,dz);
 		TEC->FillRecHitErr((int)tt->tecRing(detId),recXX,recXY,recYY);
 		break;
 	    }
@@ -518,7 +529,6 @@ TrackDensityValidator::FillAuxilaryPlots(DetId detId, unsigned int subDetId, con
     }    
 
 }
-
 
 // ------------ method called when starting to processes a run  ------------
 /*
