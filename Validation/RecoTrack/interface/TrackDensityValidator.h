@@ -53,6 +53,7 @@ class TrackDensityValidator : public edm::EDAnalyzer {
       std::string fname;
       TFile * fout;
       TH1D * TrackDensity;
+      TH2D * hPtVsEta;
 };
 
 #endif

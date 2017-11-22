@@ -67,14 +67,12 @@ TrackDensityValidator::TrackDensityValidator(const edm::ParameterSet& iConfig): 
 	verbose(iConfig.getUntrackedParameter<int>("verbose",5)),
 	fname( iPset.getParameter<string>("outfile"))
 {
-  std::cout<<"Constructor OK!"<<std::endl; 
   //usesResource("TFileService");
 }
 
 
 TrackDensityValidator::~TrackDensityValidator()
 {
-   std::cout<<"Destructor OK!"<<std::endl;
    // do anything here that needs to be done at desctruction time
    // (e.g. close files, deallocate resources etc.)
 
@@ -85,7 +83,6 @@ TrackDensityValidator::~TrackDensityValidator()
 void
 TrackDensityValidator::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 {
-    std::cout<<"Begin analyzer OK!"<<std::endl;
     using namespace edm;
     using namespace std;
 
@@ -100,13 +97,14 @@ TrackDensityValidator::analyze(const edm::Event& iEvent, const edm::EventSetup& 
     reco::TrackCollection::const_iterator trkEnd = track_handle->end();
     if (verbose > 3)
 	cout<<">>>>>>>>>>>>>>>>>>> Begining of the track loop"<<endl;
-    TH2D * PtVsEta = new TH2D("Track_scatter","Track Scatter", 20,0,200, 20,-5,5.);
+    TH2D * PtVsEta = new TH2D("Track_scatter","Track Scatter", 20,0,50, 20,-4,4.);
     for(; itTrk != trkEnd; itTrk++){
       iTrack++;
       auto && p = itTrk->momentum();
       float pt = sqrt(p.perp2());
       float eta = p.eta();
       PtVsEta->Fill(pt,eta);
+      hPtVsEta->Fill(pt,eta);
     }
     if(verbose > 3)
       cout<<"                        END OF TRACK LOOP!"<<endl;
@@ -117,28 +115,25 @@ TrackDensityValidator::analyze(const edm::Event& iEvent, const edm::EventSetup& 
       if (higherdensity > PtVsEta->GetBinContent(iBinx,iBiny)) higherdensity = PtVsEta->GetBinContent(iBinx,iBiny);
     }
     TrackDensity->Fill(higherdensity);
-    std::cout<<"End analyzer OK!"<<std::endl;
 }
 
 // ------------ method called once each job just before starting iEvent loop  ------------
 void 
 TrackDensityValidator::beginJob()
 {
-   std::cout<<"Begin beginJob OK!"<<std::endl;
-   TrackDensity = new TH1D("TrackDensity","TrackDensity", 100,0,1000);
-   std::cout<<"End beginJob OK!"<<std::endl;
+   TrackDensity = new TH1D("TrackDensity","TrackDensity", 21,0,20);
+   hPtVsEta = new TH2D("hPtVsEta","hPtVsEta", 20,0,50, 20,-4,4.);
 }
 
 // ------------ method called once each job just after ending the iEvent loop  ------------
 void 
 TrackDensityValidator::endJob() 
 {
-   std::cout<<"Begin endJob OK!"<<std::endl;
    fout = new TFile(fname.c_str(),"recreate");
    fout->cd();
    TrackDensity->Write();
+   hPtVsEta->Write();
    fout->Close();
-   std::cout<<"End endJob OK!"<<std::endl;
 }
 
 // ------------ method called when starting to processes a run  ------------

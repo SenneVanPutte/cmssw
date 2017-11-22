@@ -117,7 +117,7 @@ process.ProductionFilterSequence = cms.Sequence(process.generator)
 
 process.rechitanalysis = cms.EDAnalyzer("TrackDensityValidator",
         track_label = cms.InputTag("generalTracks"),
-        verbose = cms.untracked.int32(5),
+        verbose = cms.untracked.int32(1),
         outfile = cms.string('FastSim_Analyzer.root'),
 )
 
