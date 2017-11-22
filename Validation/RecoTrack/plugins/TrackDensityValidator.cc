@@ -1,3 +1,5 @@
+#include "../interface/TrackDensityValidator.h"
+
 // system include files
 #include <memory>
 #include <cmath>
@@ -48,31 +50,7 @@ using namespace std;
 //
 // class declaration
 //
-
-class TrackDensityValidator : public edm::EDAnalyzer {
-   public:
-      explicit TrackDensityValidator(const edm::ParameterSet&);
-      ~TrackDensityValidator();
-
-      static void fillDescriptions(edm::ConfigurationDescriptions& descriptions);
-      
-      typedef std::vector<PSimHit> PSimHitCollection;
-
-
-   private:
-      virtual void beginJob() override;
-      virtual void analyze(const edm::Event&, const edm::EventSetup&) override;
-      virtual void endJob() override;
-
-      // ----------member data ---------------------------
-      edm::ParameterSet iPset;
-      edm::EDGetTokenT<reco::TrackCollection> track_label;
-      int verbose;
-      std::string fname;
-      TFile * fout;
-      TH1D * TrackDensity;
-};
-
+// look in the header (interface/TrackDensityValidator.h)
 //
 // constants, enums and typedefs
 //
@@ -89,13 +67,14 @@ TrackDensityValidator::TrackDensityValidator(const edm::ParameterSet& iConfig): 
 	verbose(iConfig.getUntrackedParameter<int>("verbose",5)),
 	fname( iPset.getParameter<string>("outfile"))
 {
+  std::cout<<"Constructor OK!"<<std::endl; 
   //usesResource("TFileService");
 }
 
 
 TrackDensityValidator::~TrackDensityValidator()
 {
- 
+   std::cout<<"Destructor OK!"<<std::endl;
    // do anything here that needs to be done at desctruction time
    // (e.g. close files, deallocate resources etc.)
 
@@ -106,7 +85,7 @@ TrackDensityValidator::~TrackDensityValidator()
 void
 TrackDensityValidator::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 {
-  
+    std::cout<<"Begin analyzer OK!"<<std::endl;
     using namespace edm;
     using namespace std;
 
@@ -138,23 +117,28 @@ TrackDensityValidator::analyze(const edm::Event& iEvent, const edm::EventSetup& 
       if (higherdensity > PtVsEta->GetBinContent(iBinx,iBiny)) higherdensity = PtVsEta->GetBinContent(iBinx,iBiny);
     }
     TrackDensity->Fill(higherdensity);
+    std::cout<<"End analyzer OK!"<<std::endl;
 }
 
 // ------------ method called once each job just before starting iEvent loop  ------------
 void 
 TrackDensityValidator::beginJob()
 {
+   std::cout<<"Begin beginJob OK!"<<std::endl;
    TrackDensity = new TH1D("TrackDensity","TrackDensity", 100,0,1000);
+   std::cout<<"End beginJob OK!"<<std::endl;
 }
 
 // ------------ method called once each job just after ending the iEvent loop  ------------
 void 
 TrackDensityValidator::endJob() 
 {
+   std::cout<<"Begin endJob OK!"<<std::endl;
    fout = new TFile(fname.c_str(),"recreate");
    fout->cd();
    TrackDensity->Write();
    fout->Close();
+   std::cout<<"End endJob OK!"<<std::endl;
 }
 
 // ------------ method called when starting to processes a run  ------------

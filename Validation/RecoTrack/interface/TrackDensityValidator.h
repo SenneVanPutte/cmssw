@@ -31,14 +31,28 @@
 
 #include "FWCore/Framework/interface/ConsumesCollector.h"
 
-class TrackDensityValidator:
-    public DQMEDAnalyzer
-    
-{
-    public:
-        TrackDensityValidator(const edm::ParameterSet& pset);
-        virtual void analyze(edm::Event const&, edm::EventSetup const&);
-        virtual void bookHistograms(DQMStore::IBooker &i, edm::Run const&, edm::EventSetup const&);
+class TrackDensityValidator : public edm::EDAnalyzer {
+   public:
+      explicit TrackDensityValidator(const edm::ParameterSet&);
+      ~TrackDensityValidator();
+
+      static void fillDescriptions(edm::ConfigurationDescriptions& descriptions);
+
+      typedef std::vector<PSimHit> PSimHitCollection;
+
+
+   private:
+      virtual void beginJob() override;
+      virtual void analyze(const edm::Event&, const edm::EventSetup&) override;
+      virtual void endJob() override;
+
+      // ----------member data ---------------------------
+      edm::ParameterSet iPset;
+      edm::EDGetTokenT<reco::TrackCollection> track_label;
+      int verbose;
+      std::string fname;
+      TFile * fout;
+      TH1D * TrackDensity;
 };
 
 #endif
