@@ -117,7 +117,7 @@ process.ProductionFilterSequence = cms.Sequence(process.generator)
 
 process.rechitanalysis = cms.EDAnalyzer("TrackDensityValidator",
         track_label = cms.InputTag("generalTracks"),
-        verbose = cms.untracked.int32(1),
+        verbose = cms.untracked.int32(5),
         outfile = cms.string('FastSim_Analyzer.root'),
 )
 
@@ -134,7 +134,7 @@ process.DQMoutput_step = cms.EndPath(process.DQMoutput)
 process.analysis_step = cms.EndPath(process.rechitanalysis)
 
 # Schedule definition
-process.schedule = cms.Schedule(process.generation_step,process.genfiltersummary_step,process.simulation_step,process.reconstruction_befmix_step,process.digitisation_step,process.reconstruction_step,process.analysis_step,process.validation_step,process.AODSIMoutput_step,process.DQMoutput_step)
+process.schedule = cms.Schedule(process.generation_step,process.genfiltersummary_step,process.simulation_step,process.reconstruction_befmix_step,process.digitisation_step,process.reconstruction_step,process.validation_step,process.AODSIMoutput_step,process.DQMoutput_step,process.analysis_step)
 #process.schedule = cms.Schedule(process.generation_step,process.genfiltersummary_step,process.simulation_step,process.reconstruction_befmix_step,process.digitisation_step,process.reconstruction_step,process.validation_step,process.AODSIMoutput_step,process.DQMoutput_step)
 from PhysicsTools.PatAlgos.tools.helpers import associatePatAlgosToolsTask
 associatePatAlgosToolsTask(process)

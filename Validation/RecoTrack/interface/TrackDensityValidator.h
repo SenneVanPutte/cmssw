@@ -49,11 +49,17 @@ class TrackDensityValidator : public edm::EDAnalyzer {
       // ----------member data ---------------------------
       edm::ParameterSet iPset;
       edm::EDGetTokenT<reco::TrackCollection> track_label;
+      edm::EDGetTokenT<SimTrack> SIM_track_label;
       int verbose;
       std::string fname;
       TFile * fout;
-      TH1D * TrackDensity;
-      TH2D * hPtVsEta;
+      TH1D * TrackDensity_higher;
+      TH1D * TrackDensity_mean;
+      TH2D * hPhiVsEta;
+      TH1D * SIMTrackDensity_higher;
+      TH1D * SIMTrackDensity_mean;
+      TH2D * hSIMPhiVsEta;
+
 };
 
 #endif
