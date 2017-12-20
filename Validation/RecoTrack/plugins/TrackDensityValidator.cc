@@ -281,18 +281,26 @@ TrackDensityValidator::analyze(const edm::Event& iEvent, const edm::EventSetup& 
         reco::RecoToSimCollection const & recSimColl = *recSimCollP;
         reco::SimToRecoCollection const & simRecColl = *simRecCollP;
 
+        cout<<"Test 0"<<endl;
         size_t j=0;
         for(auto const& tpr: tPCeff) {
+          cout<<"Test 1"<<endl;
           const TrackingParticle& tp = *tpr;
+          cout<<"Test 2"<<endl;
           // TODO: do we want to fill these from all TPs that include IT
           // and OOT (as below), or limit to IT+OOT TPs passing tpSelector
           // (as it was before)? The latter would require another instance
           // of tpSelector with intimeOnly=False.
           selected_tPCeff.push_back(j);
-          TrackingParticle::Vector momentum = parametersDefinerTP.momentum(iEvent,iSetup,tpr);
-          TrackingParticle::Point vertex = parametersDefinerTP.vertex(iEvent,iSetup,tpr);
+          cout<<"Test 3"<<endl;
+          TrackingParticle::Vector momentum = parametersDefinerTP->momentum(iEvent,iSetup,tpr);
+          cout<<"Test 4"<<endl;
+          TrackingParticle::Point vertex = parametersDefinerTP->vertex(iEvent,iSetup,tpr);
+          cout<<"Test 5"<<endl;
           momVert_tPCeff.emplace_back(momentum, vertex);
+          cout<<"Test 6"<<endl;
           ++j;
+          cout<<"Test 7"<<endl;
         }
    
         // ########################################################
@@ -302,6 +310,7 @@ TrackDensityValidator::analyze(const edm::Event& iEvent, const edm::EventSetup& 
         if (verbose > 3)
           cout<<">>>>>>>>>>>>>>>>>>> Begining of the track loop"<<endl;
         for(size_t i=0; i<selected_tPCeff.size(); ++i) {
+          cout<<"Test 8"<<endl;
           cout << "# selected tp" << i << endl;
           size_t iTP = selected_tPCeff[i];
           const TrackingParticleRef& tpr = tPCeff[iTP];
@@ -311,9 +320,12 @@ TrackDensityValidator::analyze(const edm::Event& iEvent, const edm::EventSetup& 
           float pt = sqrt(momentumTP.perp2());
           float phi = momentumTP.phi();
           float eta = momentumTP.eta();
+          cout<<"Test 9"<<endl;
           if(simRecColl.find(tpr) != simRecColl.end()){
+            cout<<"Test 10"<<endl;
             auto const & rt = simRecColl[tpr];
             if (rt.size()!=0) {
+              cout<<"Test 11"<<endl;
               iTrack_tp++; //This counter counts the number of simTracks that have a recoTrack associated
               PhiVsEta_tp->Fill(phi,eta);
               hPhiVsEta_tp->Fill(phi,eta);

@@ -131,12 +131,12 @@ process.rechitanalysis = cms.EDAnalyzer("TrackDensityValidator",
         UseAssociators = cms.bool(True),
         associators = cms.untracked.VInputTag("quickTrackAssociatorByHits"),
         label = cms.VInputTag("generalTracks"),
+        parametersDefiner = cms.string('LhcParametersDefinerForTP'),
         ignoremissingtrackcollection = cms.untracked.bool(False),
         label_tp_effic = cms.InputTag("mix","MergedTrackTruth"),
         label_tp_fake = cms.InputTag("mix","MergedTrackTruth"),
         label_tp_effic_refvector = cms.bool(False),
         label_tp_fake_refvector = cms.bool(False),
-
 )
 
 # Path and EndPath definitions
