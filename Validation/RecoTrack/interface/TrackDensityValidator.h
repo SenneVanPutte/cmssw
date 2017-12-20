@@ -41,6 +41,21 @@ class TrackDensityValidator : public edm::EDAnalyzer {
       typedef std::vector<PSimHit> PSimHitCollection;
 
 
+   protected:
+      //std::vector<edm::InputTag> associators;
+      edm::EDGetTokenT<TrackingParticleCollection> label_tp_effic;
+      edm::EDGetTokenT<TrackingParticleCollection> label_tp_fake;
+      edm::EDGetTokenT<TrackingParticleRefVector> label_tp_effic_refvector;
+      edm::EDGetTokenT<TrackingParticleRefVector> label_tp_fake_refvector;
+      //edm::EDGetTokenT<TrackingVertexCollection> label_tv;
+      //edm::EDGetTokenT<std::vector<PileupSummaryInfo> > label_pileupinfo;
+
+      //std::vector<edm::EDGetTokenT<std::vector<PSimHit> > > simHitTokens_;
+
+      //std::vector<edm::InputTag> label;
+      std::vector<edm::EDGetTokenT<edm::View<reco::Track> > > labelToken;
+
+
    private:
       virtual void beginJob() override;
       virtual void analyze(const edm::Event&, const edm::EventSetup&) override;
@@ -49,10 +64,30 @@ class TrackDensityValidator : public edm::EDAnalyzer {
       // ----------member data ---------------------------
       edm::ParameterSet iPset;
       edm::EDGetTokenT<reco::TrackCollection> track_label;
+      //edm::View<reco::Track> trackCollection;
+      edm::EDGetTokenT<SimTrack> SIM_track_label;
       int verbose;
       std::string fname;
+      bool UseAssociators;
+      std::vector<edm::InputTag> associators;
+      std::vector<edm::EDGetTokenT<reco::TrackToTrackingParticleAssociator>> associatorTokens;
+      std::vector<edm::EDGetTokenT<reco::SimToRecoCollection>> associatormapStRs;
+      std::vector<edm::EDGetTokenT<reco::RecoToSimCollection>> associatormapRtSs;
+      std::vector<edm::InputTag> label;
+      std::string parametersDefiner;
+      edm::EDGetTokenT<edm::View<reco::Track> > trackCollectionHandle;
+      const bool ignoremissingtkcollection_;
       TFile * fout;
-      TH1D * TrackDensity;
+      TH1D * TrackDensity_higher;
+      TH1D * TrackDensity_mean;
+      TH2D * hPhiVsEta;
+      TH1D * SIMTrackDensity_higher;
+      TH1D * SIMTrackDensity_mean;
+      TH2D * hSIMPhiVsEta;
+      TH1D * TrackDensity_tp_higher;
+      TH1D * TrackDensity_tp_mean;
+      TH2D * hPhiVsEta_tp;
+
 };
 
 #endif

@@ -2,12 +2,12 @@
 # using: 
 # Revision: 1.19 
 # Source: /local/reps/CMSSW/CMSSW/Configuration/Applications/python/ConfigBuilder.py,v 
-# with command line options: TTbar_13TeV_TuneCUETP8M1_cfi --conditions auto:run2_mc --fast -n 10 --era Run2_25ns --magField 38T_PostLS1 --beamspot Realistic50ns13TeVCollision --datatier AODSIM,DQMIO --eventcontent AODSIM,DQM -s GEN,SIM,RECOBEFMIX,DIGI:pdigi_valid,RECO,VALIDATION:tracksValidationTrackingOnly --python_filename fastsim.py --fileout fastsim.root --no_exec
+# with command line options: TTbar_13TeV_TuneCUETP8M1_cfi --conditions auto:run2_mc --fast -n 100 --era Run2_2016 --beamspot Realistic50ns13TeVCollision --datatier AODSIM,DQMIO --eventcontent AODSIM,DQM -s GEN,SIM,RECOBEFMIX,DIGI:pdigi_valid,RECO,VALIDATION:tracksValidationTrackingOnly --python_filename fastsim.py --fileout fastsim.root --no_exe
 import FWCore.ParameterSet.Config as cms
 
 from Configuration.StandardSequences.Eras import eras
 
-process = cms.Process('RECO',eras.Run2_25ns,eras.fastSim)
+process = cms.Process('RECO',eras.Run2_2016,eras.fastSim)
 
 # import of standard configurations
 process.load('Configuration.StandardSequences.Services_cff')
@@ -16,7 +16,7 @@ process.load('FWCore.MessageService.MessageLogger_cfi')
 process.load('Configuration.EventContent.EventContent_cff')
 process.load('SimGeneral.MixingModule.mixNoPU_cfi')
 process.load('FastSimulation.Configuration.Geometries_MC_cff')
-process.load('Configuration.StandardSequences.MagneticField_38T_PostLS1_cff')
+process.load('Configuration.StandardSequences.MagneticField_cff')
 process.load('Configuration.StandardSequences.Generator_cff')
 process.load('IOMC.EventVertexGenerators.VtxSmearedRealistic50ns13TeVCollision_cfi')
 process.load('GeneratorInterface.Core.genFilterSummary_cff')
@@ -28,7 +28,7 @@ process.load('Configuration.StandardSequences.Validation_cff')
 process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
 
 process.maxEvents = cms.untracked.PSet(
-    input = cms.untracked.int32(100)
+    input = cms.untracked.int32(1000)
 )
 
 # Input source
@@ -40,7 +40,7 @@ process.options = cms.untracked.PSet(
 
 # Production Info
 process.configurationMetadata = cms.untracked.PSet(
-    annotation = cms.untracked.string('TTbar_13TeV_TuneCUETP8M1_cfi nevts:100'),
+    annotation = cms.untracked.string('TTbar_13TeV_TuneCUETP8M1_cfi nevts:1000'),
     name = cms.untracked.string('Applications'),
     version = cms.untracked.string('$Revision: 1.19 $')
 )
@@ -57,7 +57,7 @@ process.AODSIMoutput = cms.OutputModule("PoolOutputModule",
         dataTier = cms.untracked.string('AODSIM'),
         filterName = cms.untracked.string('')
     ),
-    eventAutoFlushCompressedSize = cms.untracked.int32(15728640),
+    eventAutoFlushCompressedSize = cms.untracked.int32(31457280),
     fileName = cms.untracked.string('fastsim.root'),
     outputCommands = process.AODSIMEventContent.outputCommands
 )
@@ -85,18 +85,25 @@ process.GlobalTag = GlobalTag(process.GlobalTag, 'auto:run2_mc', '')
 
 process.generator = cms.EDFilter("Pythia8GeneratorFilter",
     PythiaParameters = cms.PSet(
-        parameterSets = cms.vstring('pythia8CommonSettings', 
+        parameterSets = cms.vstring(
+            'pythia8CommonSettings', 
             'pythia8CUEP8M1Settings', 
-            'processParameters'),
-        processParameters = cms.vstring('Top:gg2ttbar = on ', 
+            'processParameters'
+        ),
+        processParameters = cms.vstring(
+            'Top:gg2ttbar = on ', 
             'Top:qqbar2ttbar = on ', 
-            '6:m0 = 175 '),
-        pythia8CUEP8M1Settings = cms.vstring('Tune:pp 14', 
+            '6:m0 = 175 '
+        ),
+        pythia8CUEP8M1Settings = cms.vstring(
+            'Tune:pp 14', 
             'Tune:ee 7', 
             'MultipartonInteractions:pT0Ref=2.4024', 
             'MultipartonInteractions:ecmPow=0.25208', 
-            'MultipartonInteractions:expPow=1.6'),
-        pythia8CommonSettings = cms.vstring('Tune:preferLHAPDF = 2', 
+            'MultipartonInteractions:expPow=1.6'
+        ),
+        pythia8CommonSettings = cms.vstring(
+            'Tune:preferLHAPDF = 2', 
             'Main:timesAllowErrors = 10000', 
             'Check:epTolErr = 0.01', 
             'Beams:setProductionScalesFromLHEF = off', 
@@ -104,7 +111,8 @@ process.generator = cms.EDFilter("Pythia8GeneratorFilter",
             'SLHA:minMassSM = 1000.', 
             'ParticleDecays:limitTau0 = on', 
             'ParticleDecays:tau0Max = 10', 
-            'ParticleDecays:allowPhotonRadiation = on')
+            'ParticleDecays:allowPhotonRadiation = on'
+        )
     ),
     comEnergy = cms.double(13000.0),
     filterEfficiency = cms.untracked.double(1.0),
@@ -113,12 +121,22 @@ process.generator = cms.EDFilter("Pythia8GeneratorFilter",
     pythiaPylistVerbosity = cms.untracked.int32(0)
 )
 
+
 process.ProductionFilterSequence = cms.Sequence(process.generator)
 
 process.rechitanalysis = cms.EDAnalyzer("TrackDensityValidator",
         track_label = cms.InputTag("generalTracks"),
         verbose = cms.untracked.int32(5),
         outfile = cms.string('FastSim_Analyzer.root'),
+        UseAssociators = cms.bool(True),
+        associators = cms.untracked.VInputTag("quickTrackAssociatorByHits"),
+        label = cms.VInputTag("generalTracks"),
+        ignoremissingtrackcollection = cms.untracked.bool(False),
+        label_tp_effic = cms.InputTag("mix","MergedTrackTruth"),
+        label_tp_fake = cms.InputTag("mix","MergedTrackTruth"),
+        label_tp_effic_refvector = cms.bool(False),
+        label_tp_fake_refvector = cms.bool(False),
+
 )
 
 # Path and EndPath definitions
@@ -134,8 +152,7 @@ process.DQMoutput_step = cms.EndPath(process.DQMoutput)
 process.analysis_step = cms.EndPath(process.rechitanalysis)
 
 # Schedule definition
-process.schedule = cms.Schedule(process.generation_step,process.genfiltersummary_step,process.simulation_step,process.reconstruction_befmix_step,process.digitisation_step,process.reconstruction_step,process.analysis_step,process.validation_step,process.AODSIMoutput_step,process.DQMoutput_step)
-#process.schedule = cms.Schedule(process.generation_step,process.genfiltersummary_step,process.simulation_step,process.reconstruction_befmix_step,process.digitisation_step,process.reconstruction_step,process.validation_step,process.AODSIMoutput_step,process.DQMoutput_step)
+process.schedule = cms.Schedule(process.generation_step,process.genfiltersummary_step,process.simulation_step,process.reconstruction_befmix_step,process.digitisation_step,process.reconstruction_step,process.validation_step,process.AODSIMoutput_step,process.DQMoutput_step,process.analysis_step)
 from PhysicsTools.PatAlgos.tools.helpers import associatePatAlgosToolsTask
 associatePatAlgosToolsTask(process)
 # filter all path with the production filter sequence
@@ -144,6 +161,10 @@ for path in process.paths:
 
 
 # Customisation from command line
+
+#Have logErrorHarvester wait for the same EDProducers to finish as those providing data for the OutputModule
+from FWCore.Modules.logErrorHarvester_cff import customiseLogErrorHarvesterUsingOutputCommands
+process = customiseLogErrorHarvesterUsingOutputCommands(process)
 
 # Add early deletion of temporary data products to reduce peak memory need
 from Configuration.StandardSequences.earlyDeleteSettings_cff import customiseEarlyDelete

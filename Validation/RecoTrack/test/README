@@ -1,5 +1,15 @@
-cmsRun $CMSSW_BASE/src/Validation/RecoTrack/test/MultiTrackValidator_cfg.py
-will run 8 threads and produce an edm file named MTV_inDQM.root
-cmsRun $CMSSW_BASE/src/Validation/RecoTrack/test/MTV_HARVESTING.py
-will read the above and produce an histogram file
-DQM_V0001_R000000001__Global__CMSSW_X_Y_Z__RECO.root
+cmsDriver.py TTbar_13TeV_TuneCUETP8M1_cfi --conditions auto:run2_mc --fast -n 1000 --era Run2_2016 --beamspot Realistic50ns13TeVCollision --datatier AODSIM,DQMIO --eventcontent AODSIM,DQM -s GEN,SIM,RECOBEFMIX,DIGI:pdigi_valid,RECO,VALIDATION:tracksValidationTrackingOnly --python_filename fastsim.py --fileout fastsim.root --no_exe
+
+cmsDriver.py step3 \
+--conditions auto:run2_mc -n 1000 \
+--era Run2_2016 \
+-s RAW2DIGI,RECO,VALIDATION:tracksValidationTrackingOnly \
+--datatier AODSIM,DQMIO --eventcontent AODSIM,DQM \
+--filein das:/RelValTTbar_13/CMSSW_9_4_0_pre1-PUpmx25ns_93X_mc2017_realistic_v3-v2/GEN-SIM-DIGI-RAW-HLTDEBUG \
+--python_filename fullsim.py --fileout fullsim.root \
+--no_exec
+
+runTheMatrix.py -ne -l 10024.2
+
+
+bsub -q 1nd -J job_step1_fullsim < lxplusbatchscript.csh
