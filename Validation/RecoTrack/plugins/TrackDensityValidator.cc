@@ -80,7 +80,6 @@ using namespace std;
 //
 TrackDensityValidator::TrackDensityValidator(const edm::ParameterSet& iConfig): iPset(iConfig), 
 	track_label(consumes<reco::TrackCollection>(iPset.getParameter<edm::InputTag>("track_label"))),
-	SIM_track_label(consumes<SimTrack>(iPset.getParameter<edm::InputTag>("SIM_track_label"))),
 	verbose(iConfig.getUntrackedParameter<int>("verbose",5)),
 	fname( iPset.getParameter<string>("outfile")),
         UseAssociators(iPset.getParameter< bool >("UseAssociators")),
@@ -89,7 +88,6 @@ TrackDensityValidator::TrackDensityValidator(const edm::ParameterSet& iConfig): 
         parametersDefiner(iPset.getParameter<std::string>("parametersDefiner")),
         ignoremissingtkcollection_(iPset.getUntrackedParameter<bool>("ignoremissingtrackcollection",false))
 {
-<<<<<<< HEAD
   const edm::InputTag& label_tp_effic_tag = iPset.getParameter< edm::InputTag >("label_tp_effic");
   const edm::InputTag& label_tp_fake_tag = iPset.getParameter< edm::InputTag >("label_tp_fake");
 
@@ -109,8 +107,6 @@ TrackDensityValidator::TrackDensityValidator(const edm::ParameterSet& iConfig): 
     labelToken.push_back(consumes<edm::View<reco::Track> >(itag));
   }
 
-=======
->>>>>>> 39ca53e9b2cd7e65d70129f53a45b1f384f2521d
   //usesResource("TFileService");
   if(UseAssociators) {
     for (auto const& src: associators) {
@@ -148,9 +144,6 @@ TrackDensityValidator::analyze(const edm::Event& iEvent, const edm::EventSetup& 
     Handle<reco::TrackCollection> track_handle;
     iEvent.getByToken(track_label, track_handle);
 
-    Handle<SimTrack> SIM_track_handle;
-    iEvent.getByToken(SIM_track_label, SIM_track_handle);
-
     int iTrack = 0;
     reco::TrackCollection::const_iterator itTrk = track_handle->begin();
     reco::TrackCollection::const_iterator trkEnd = track_handle->end();
@@ -184,7 +177,6 @@ TrackDensityValidator::analyze(const edm::Event& iEvent, const edm::EventSetup& 
         //cout<<"PhiBin = "<< iBinx << " , EtaBin = " << iBiny << ", Density = " << density <<endl;
         if (higherdensity < density) higherdensity = density;
       }
-<<<<<<< HEAD
     }
     double meandensity = hTrackDensity->GetMean();
     if(verbose > 3)
@@ -347,56 +339,7 @@ TrackDensityValidator::analyze(const edm::Event& iEvent, const edm::EventSetup& 
         TrackDensity_tp_higher->Fill(higherdensity_tp);
         TrackDensity_tp_mean->Fill(meandensity_tp);
       }
-    }    
-=======
     }
-    double meandensity = hTrackDensity->GetMean();
-    if(verbose > 3)
-      cout<<"higherdensity = " << higherdensity <<"; meandensity = " << meandensity<<endl;
-    TrackDensity_higher->Fill(higherdensity);
-    TrackDensity_mean->Fill(meandensity);
-
-    //-----------  SIM TRACKS!!!
-    int iSIMTrack = 0;
-    SimTrack::const_iterator SIM_itTrk =  SIM_track_handle->begin();
-    SimTrack::const_iterator SIM_trkEnd = SIM_track_handle->end();
-    if (verbose > 3)
-        cout<<">>>>>>>>>>>>>>>>>>> Begining of the SIM track loop"<<endl;
-    TH2D * SIMPhiVsEta = new TH2D("Track_scatter","Track Scatter", 10,-3.15,3.15, 10,-2.4,2.4);
-    TH1D * hSIMTrackDensity = new TH1D("hTrackDensity","hTrackDensity", 100,0,100);
-    for(; SIM_itTrk != SIM_trkEnd; SIM_itTrk++){
-      iSIMTrack++;
-      auto && p = itTrk->momentum();
-      float pt = sqrt(p.perp2());
-      float phi = p.phi();
-      float eta = p.eta();
-      SIMPhiVsEta->Fill(phi,eta);
-      hSIMPhiVsEta->Fill(phi,eta);
-    }
-    if(verbose > 3)
-      cout<<"                        END OF SIM TRACK LOOP!"<<endl;
-    if (verbose > 4)
-      cout<< iTrack <<" TRACKS !!"<<endl;
-    double SIMhigherdensity = 0;
-    //double ndensity = 0;
-    //double sumdensity = 0;
-    for (int iBinx = 0; iBinx <= 10; iBinx++){
-      for (int iBiny = 0; iBiny <= 10; iBiny++){
-        double density = SIMPhiVsEta->GetBinContent(iBinx,iBiny);
-        if (density== 0) continue;
-        hSIMTrackDensity->Fill(density);
-        //sumdensity = sumdensity + density;
-        //ndensity++;
-        //cout<<"PhiBin = "<< iBinx << " , EtaBin = " << iBiny << ", Density = " << density <<endl;
-        if (SIMhigherdensity < density) SIMhigherdensity = density;
-      }
-    }
-    double SIMmeandensity = hSIMTrackDensity->GetMean();
-    if(verbose > 3)
-      cout<<"SIMhigherdensity = " << SIMhigherdensity <<"; SIMmeandensity = " << meandensity<<endl;
-    SIMTrackDensity_higher->Fill(SIMhigherdensity);
-    SIMTrackDensity_mean->Fill(SIMmeandensity);
->>>>>>> 39ca53e9b2cd7e65d70129f53a45b1f384f2521d
 
 }
 
@@ -407,15 +350,9 @@ TrackDensityValidator::beginJob()
    TrackDensity_higher = new TH1D("TrackDensity_higher","TrackDensity_higher", 100,0,100);
    TrackDensity_mean = new TH1D("TrackDensity_mean","TrackDensity_mean", 100,0,10);
    hPhiVsEta = new TH2D("hPhiVsEta","hPhiVsEta", 10,-3.15,3.15, 10,-2.4,2.4);
-<<<<<<< HEAD
    TrackDensity_tp_higher = new TH1D("TrackDensity_tp_higher","TrackDensity_tp_higher", 100,0,100);
    TrackDensity_tp_mean = new TH1D("TrackDensity_tp_mean","TrackDensity_tp_mean", 100,0,10);
    hPhiVsEta_tp = new TH2D("hPhiVsEta_tp","hPhiVsEta_tp", 10,-3.15,3.15, 10,-2.4,2.4);
-=======
-   SIMTrackDensity_higher = new TH1D("SIMTrackDensity_higher","SIMTrackDensity_higher", 100,0,100);
-   SIMTrackDensity_mean = new TH1D("SIMTrackDensity_mean","SIMTrackDensity_mean", 100,0,10);
-   hSIMPhiVsEta = new TH2D("hSIMPhiVsEta","hSIMPhiVsEta", 10,-3.15,3.15, 10,-2.4,2.4);
->>>>>>> 39ca53e9b2cd7e65d70129f53a45b1f384f2521d
 }
 
 // ------------ method called once each job just after ending the iEvent loop  ------------
@@ -427,15 +364,9 @@ TrackDensityValidator::endJob()
    TrackDensity_higher->Write();
    TrackDensity_mean->Write();
    hPhiVsEta->Write();
-<<<<<<< HEAD
    TrackDensity_tp_higher->Write();
    TrackDensity_tp_mean->Write();
    hPhiVsEta_tp->Write();
-=======
-   SIMTrackDensity_higher->Write();
-   SIMTrackDensity_mean->Write();
-   hSIMPhiVsEta->Write();
->>>>>>> 39ca53e9b2cd7e65d70129f53a45b1f384f2521d
    fout->Close();
 }
 
