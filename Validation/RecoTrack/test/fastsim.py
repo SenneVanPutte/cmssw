@@ -153,10 +153,6 @@ process.analysis_step = cms.EndPath(process.rechitanalysis)
 
 # Schedule definition
 process.schedule = cms.Schedule(process.generation_step,process.genfiltersummary_step,process.simulation_step,process.reconstruction_befmix_step,process.digitisation_step,process.reconstruction_step,process.validation_step,process.AODSIMoutput_step,process.DQMoutput_step,process.analysis_step)
-<<<<<<< HEAD
-=======
-#process.schedule = cms.Schedule(process.generation_step,process.genfiltersummary_step,process.simulation_step,process.reconstruction_befmix_step,process.digitisation_step,process.reconstruction_step,process.validation_step,process.AODSIMoutput_step,process.DQMoutput_step)
->>>>>>> 39ca53e9b2cd7e65d70129f53a45b1f384f2521d
 from PhysicsTools.PatAlgos.tools.helpers import associatePatAlgosToolsTask
 associatePatAlgosToolsTask(process)
 # filter all path with the production filter sequence
