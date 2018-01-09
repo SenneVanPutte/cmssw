@@ -40,20 +40,22 @@ class TrackDensityValidator : public edm::EDAnalyzer {
 
       typedef std::vector<PSimHit> PSimHitCollection;
 
-
    protected:
-      //std::vector<edm::InputTag> associators;
+      edm::ParameterSet iPset;
+      edm::EDGetTokenT<reco::TrackCollection> track_label;
+      int verbose;
+      std::string fname;
+      const bool ignoremissingtkcollection_;
+      const bool useAssociators_;
+      std::vector<edm::InputTag> associators;
       edm::EDGetTokenT<TrackingParticleCollection> label_tp_effic;
       edm::EDGetTokenT<TrackingParticleCollection> label_tp_fake;
       edm::EDGetTokenT<TrackingParticleRefVector> label_tp_effic_refvector;
       edm::EDGetTokenT<TrackingParticleRefVector> label_tp_fake_refvector;
-      //edm::EDGetTokenT<TrackingVertexCollection> label_tv;
-      //edm::EDGetTokenT<std::vector<PileupSummaryInfo> > label_pileupinfo;
-
-      //std::vector<edm::EDGetTokenT<std::vector<PSimHit> > > simHitTokens_;
-
-      //std::vector<edm::InputTag> label;
+      std::vector<edm::InputTag> label;
+      std::string parametersDefiner;
       std::vector<edm::EDGetTokenT<edm::View<reco::Track> > > labelToken;
+      edm::EDGetTokenT<reco::BeamSpot> bsSrc;
 
 
    private:
@@ -62,19 +64,27 @@ class TrackDensityValidator : public edm::EDAnalyzer {
       virtual void endJob() override;
 
       // ----------member data ---------------------------
-      edm::ParameterSet iPset;
-      edm::EDGetTokenT<reco::TrackCollection> track_label;
-      int verbose;
-      std::string fname;
-      bool UseAssociators;
-      std::vector<edm::InputTag> associators;
+      
+     void tpParametersAndSelection(const TrackingParticleRefVector& tPCeff,
+                                   const ParametersDefinerForTP& parametersDefinerTP,
+                                   const edm::Event& event, const edm::EventSetup& setup,
+                                   const reco::BeamSpot& bs,
+                                   std::vector<std::tuple<TrackingParticle::Vector, TrackingParticle::Point> >& momVert_tPCeff,
+                                   std::vector<size_t>& selected_tPCeff) const;
+      //edm::ParameterSet iPset;
+      //edm::EDGetTokenT<reco::TrackCollection> track_label;
+      //int verbose;
+      //std::string fname;
+      //bool UseAssociators;
+      //std::vector<edm::InputTag> associators;
       std::vector<edm::EDGetTokenT<reco::TrackToTrackingParticleAssociator>> associatorTokens;
       std::vector<edm::EDGetTokenT<reco::SimToRecoCollection>> associatormapStRs;
       std::vector<edm::EDGetTokenT<reco::RecoToSimCollection>> associatormapRtSs;
-      std::vector<edm::InputTag> label;
-      std::string parametersDefiner;
+      //std::vector<edm::InputTag> label;
+      //edm::EDGetTokenT<std::string> parametersDefiner;
+      TrackingParticleSelector tpSelector;
       edm::EDGetTokenT<edm::View<reco::Track> > trackCollectionHandle;
-      const bool ignoremissingtkcollection_;
+      //const bool ignoremissingtkcollection_;
       TFile * fout;
       TH1D * TrackDensity_higher;
       TH1D * TrackDensity_mean;

@@ -82,11 +82,12 @@ TrackDensityValidator::TrackDensityValidator(const edm::ParameterSet& iConfig): 
 	track_label(consumes<reco::TrackCollection>(iPset.getParameter<edm::InputTag>("track_label"))),
 	verbose(iConfig.getUntrackedParameter<int>("verbose",5)),
 	fname( iPset.getParameter<string>("outfile")),
-        UseAssociators(iPset.getParameter< bool >("UseAssociators")),
+        ignoremissingtkcollection_(iPset.getUntrackedParameter<bool>("ignoremissingtrackcollection",false)),
+        useAssociators_(iPset.getParameter< bool >("UseAssociators")),
         associators(iPset.getUntrackedParameter< std::vector<edm::InputTag> >("associators")),
         label(iPset.getParameter< std::vector<edm::InputTag> >("label")),
-        parametersDefiner(iPset.getParameter<std::string>("parametersDefiner")),
-        ignoremissingtkcollection_(iPset.getUntrackedParameter<bool>("ignoremissingtrackcollection",false))
+        parametersDefiner(iPset.getParameter<std::string>("parametersDefiner"))
+        //parametersDefiner(consumes<edm::ESHandle<ParametersDefinerForTP>>(iPset.getParameter<edm::InputTag>("parametersDefiner")))
 {
   const edm::InputTag& label_tp_effic_tag = iPset.getParameter< edm::InputTag >("label_tp_effic");
   const edm::InputTag& label_tp_fake_tag = iPset.getParameter< edm::InputTag >("label_tp_fake");
@@ -107,8 +108,24 @@ TrackDensityValidator::TrackDensityValidator(const edm::ParameterSet& iConfig): 
     labelToken.push_back(consumes<edm::View<reco::Track> >(itag));
   }
 
+  edm::InputTag beamSpotTag = iPset.getParameter<edm::InputTag>("beamSpot");
+  bsSrc = consumes<reco::BeamSpot>(beamSpotTag);
+  
+  tpSelector = TrackingParticleSelector(iPset.getParameter<double>("ptMinTP"),
+                                        iPset.getParameter<double>("ptMaxTP"),
+                                        iPset.getParameter<double>("minRapidityTP"),
+                                        iPset.getParameter<double>("maxRapidityTP"),
+                                        iPset.getParameter<double>("tipTP"),
+                                        iPset.getParameter<double>("lipTP"),
+                                        iPset.getParameter<int>("minHitTP"),
+                                        iPset.getParameter<bool>("signalOnlyTP"),
+                                        iPset.getParameter<bool>("intimeOnlyTP"),
+                                        iPset.getParameter<bool>("chargedOnlyTP"),
+                                        iPset.getParameter<bool>("stableOnlyTP"),
+                                        iPset.getParameter<std::vector<int> >("pdgIdTP"));
+
   //usesResource("TFileService");
-  if(UseAssociators) {
+  if(useAssociators_) {
     for (auto const& src: associators) {
       associatorTokens.push_back(consumes<reco::TrackToTrackingParticleAssociator>(src));
     }
@@ -129,6 +146,30 @@ TrackDensityValidator::~TrackDensityValidator()
 
 }
 
+void TrackDensityValidator::tpParametersAndSelection(const TrackingParticleRefVector& tPCeff,
+                                                   const ParametersDefinerForTP& parametersDefinerTP,
+                                                   const edm::Event& iEvent, const edm::EventSetup& iSetup,
+                                                   const reco::BeamSpot& bs,
+                                                   std::vector<std::tuple<TrackingParticle::Vector, TrackingParticle::Point> >& momVert_tPCeff,
+                                                   std::vector<size_t>& selected_tPCeff) const {
+  selected_tPCeff.reserve(tPCeff.size());
+  momVert_tPCeff.reserve(tPCeff.size());
+  size_t j=0;
+  for(auto const& tpr: tPCeff) {
+    const TrackingParticle& tp = *tpr;
+    // TODO: do we want to fill these from all TPs that include IT
+    // and OOT (as below), or limit to IT+OOT TPs passing tpSelector
+    // (as it was before)? The latter would require another instance
+    // of tpSelector with intimeOnly=False.
+    if(tpSelector(tp)) {
+      selected_tPCeff.push_back(j);
+      TrackingParticle::Vector momentum = parametersDefinerTP.momentum(iEvent,iSetup,tpr);
+      TrackingParticle::Point vertex = parametersDefinerTP.vertex(iEvent,iSetup,tpr);
+      momVert_tPCeff.emplace_back(momentum, vertex);
+    }
+    ++j;
+  }
+}
 
 // ------------ method called for each iEvent  ------------
 void
@@ -185,7 +226,7 @@ TrackDensityValidator::analyze(const edm::Event& iEvent, const edm::EventSetup& 
     TrackDensity_mean->Fill(meandensity);
 
     ////////////////////////////////////////////////////
-    // RECO SIM implementation from tracking particles
+    // RECO SIM implementation /from tracking particles
     ///////////////////////////////////////////////////
     TH2D * PhiVsEta_tp = new TH2D("PhiVsEta_tp","PhiVsEta_tp", 10,-3.15,3.15, 10,-2.4,2.4);
     TH1D * hTrackDensity_tp = new TH1D("hTrackDensity_tp","hTrackDensity_tp", 100,0,100);
@@ -193,6 +234,7 @@ TrackDensityValidator::analyze(const edm::Event& iEvent, const edm::EventSetup& 
     edm::ESHandle<ParametersDefinerForTP> parametersDefinerTPHandle;
     iSetup.get<TrackAssociatorRecord>().get(parametersDefiner,parametersDefinerTPHandle);
     auto parametersDefinerTP = parametersDefinerTPHandle->clone();
+    //Since we modify the object, we must clone it
 
     int iTrack_tp = 0; 
     int w=0; //counter counting the number of sets of histograms
@@ -233,15 +275,19 @@ TrackDensityValidator::analyze(const edm::Event& iEvent, const edm::EventSetup& 
     TrackingParticleRefVector const & tPCeff = *tmpTPeffPtr;
     TrackingParticleRefVector const & tPCfake = *tmpTPfakePtr;
 
+    edm::Handle<reco::BeamSpot> recoBeamSpotHandle;
+    iEvent.getByToken(bsSrc,recoBeamSpotHandle);
+    reco::BeamSpot const & bs = *recoBeamSpotHandle;
+
     std::vector<size_t> selected_tPCeff;
     std::vector<std::tuple<TrackingParticle::Vector, TrackingParticle::Point>> momVert_tPCeff;
-    //tpParametersAndSelection(tPCeff, *parametersDefinerTP, event, setup, bs, momVert_tPCeff, selected_tPCeff);
+    tpParametersAndSelection(tPCeff, *parametersDefinerTP, iEvent, iSetup, bs, momVert_tPCeff, selected_tPCeff);
 
     for (unsigned int ww=0;ww<associators.size();ww++){
       // run value filtering of recoToSim map already here as it depends only on the association, not track collection
       reco::RecoToSimCollection const * recSimCollP=nullptr;
       reco::RecoToSimCollection recSimCollL;
-      if(!UseAssociators) {
+      if(!useAssociators_) {
         Handle<reco::SimToRecoCollection > simtorecoCollectionH;
         iEvent.getByToken(associatormapStRs[ww], simtorecoCollectionH);
 
@@ -263,7 +309,7 @@ TrackDensityValidator::analyze(const edm::Event& iEvent, const edm::EventSetup& 
         reco::SimToRecoCollection const * simRecCollP=nullptr;
         reco::SimToRecoCollection simRecCollL;
         //associate tracks
-        if(UseAssociators){
+        if(useAssociators_){
           edm::Handle<reco::TrackToTrackingParticleAssociator> theAssociator;
           iEvent.getByToken(associatorTokens[ww], theAssociator);
   
@@ -281,26 +327,22 @@ TrackDensityValidator::analyze(const edm::Event& iEvent, const edm::EventSetup& 
         reco::RecoToSimCollection const & recSimColl = *recSimCollP;
         reco::SimToRecoCollection const & simRecColl = *simRecCollP;
 
-        cout<<"Test 0"<<endl;
         size_t j=0;
         for(auto const& tpr: tPCeff) {
-          cout<<"Test 1"<<endl;
           const TrackingParticle& tp = *tpr;
-          cout<<"Test 2"<<endl;
           // TODO: do we want to fill these from all TPs that include IT
           // and OOT (as below), or limit to IT+OOT TPs passing tpSelector
           // (as it was before)? The latter would require another instance
           // of tpSelector with intimeOnly=False.
-          selected_tPCeff.push_back(j);
-          cout<<"Test 3"<<endl;
-          TrackingParticle::Vector momentum = parametersDefinerTP->momentum(iEvent,iSetup,tpr);
-          cout<<"Test 4"<<endl;
-          TrackingParticle::Point vertex = parametersDefinerTP->vertex(iEvent,iSetup,tpr);
-          cout<<"Test 5"<<endl;
-          momVert_tPCeff.emplace_back(momentum, vertex);
-          cout<<"Test 6"<<endl;
+          if(tpSelector(tp)){
+            selected_tPCeff.push_back(j);
+            TrackingParticle::Vector momentum;
+            momentum = parametersDefinerTP->momentum(iEvent,iSetup,tpr);
+            TrackingParticle::Point vertex;
+            vertex = parametersDefinerTP->vertex(iEvent,iSetup,tpr);
+            momVert_tPCeff.emplace_back(momentum, vertex);
+          }
           ++j;
-          cout<<"Test 7"<<endl;
         }
    
         // ########################################################
@@ -310,22 +352,17 @@ TrackDensityValidator::analyze(const edm::Event& iEvent, const edm::EventSetup& 
         if (verbose > 3)
           cout<<">>>>>>>>>>>>>>>>>>> Begining of the track loop"<<endl;
         for(size_t i=0; i<selected_tPCeff.size(); ++i) {
-          cout<<"Test 8"<<endl;
-          cout << "# selected tp" << i << endl;
           size_t iTP = selected_tPCeff[i];
           const TrackingParticleRef& tpr = tPCeff[iTP];
           const TrackingParticle& tp = *tpr;
           auto const& momVert = momVert_tPCeff[i];
-          TrackingParticle::Vector momentumTP;
+          const TrackingParticle::Vector& momentumTP = std::get<TrackingParticle::Vector>(momVert);
           float pt = sqrt(momentumTP.perp2());
           float phi = momentumTP.phi();
           float eta = momentumTP.eta();
-          cout<<"Test 9"<<endl;
           if(simRecColl.find(tpr) != simRecColl.end()){
-            cout<<"Test 10"<<endl;
             auto const & rt = simRecColl[tpr];
             if (rt.size()!=0) {
-              cout<<"Test 11"<<endl;
               iTrack_tp++; //This counter counts the number of simTracks that have a recoTrack associated
               PhiVsEta_tp->Fill(phi,eta);
               hPhiVsEta_tp->Fill(phi,eta);
@@ -347,7 +384,7 @@ TrackDensityValidator::analyze(const edm::Event& iEvent, const edm::EventSetup& 
         }
         double meandensity_tp = hTrackDensity_tp->GetMean();
         if(verbose > 3)
-          cout<<"tp higherdensity = " << higherdensity_tp <<"; tp meandensity = " << meandensity<<endl;
+          cout<<"tp higherdensity = " << higherdensity_tp <<"; tp meandensity = " << meandensity_tp<<endl;
         TrackDensity_tp_higher->Fill(higherdensity_tp);
         TrackDensity_tp_mean->Fill(meandensity_tp);
       }
