@@ -24,7 +24,7 @@ process.load('Configuration.StandardSequences.Validation_cff')
 process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
 
 process.maxEvents = cms.untracked.PSet(
-    input = cms.untracked.int32(1000)
+    input = cms.untracked.int32(-1)
 )
 
 # Input source
@@ -80,7 +80,7 @@ process.GlobalTag = GlobalTag(process.GlobalTag, 'auto:run2_mc', '')
 
 process.rechitanalysis = cms.EDAnalyzer("TrackDensityValidator",
         track_label = cms.InputTag("generalTracks"),
-        verbose = cms.untracked.int32(5),
+        verbose = cms.untracked.int32(1),
         outfile = cms.string('FullSim_Analyzer.root'),
         UseAssociators = cms.bool(True),
         associators = cms.untracked.VInputTag("quickTrackAssociatorByHits"),
@@ -114,6 +114,10 @@ process.validation_step = cms.EndPath(process.tracksValidationTrackingOnly)
 process.AODSIMoutput_step = cms.EndPath(process.AODSIMoutput)
 process.DQMoutput_step = cms.EndPath(process.DQMoutput)
 process.analysis_step = cms.EndPath(process.rechitanalysis)
+
+process.source.fileNames = [
+ 'filetoreplace.root',
+]
 
 # Schedule definition
 process.schedule = cms.Schedule(process.raw2digi_step,process.L1Reco_step,process.reconstruction_step,process.validation_step,process.AODSIMoutput_step,process.DQMoutput_step,process.analysis_step)

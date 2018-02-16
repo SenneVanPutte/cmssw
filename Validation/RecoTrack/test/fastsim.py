@@ -2,7 +2,7 @@
 # using: 
 # Revision: 1.19 
 # Source: /local/reps/CMSSW/CMSSW/Configuration/Applications/python/ConfigBuilder.py,v 
-# with command line options: TTbar_13TeV_TuneCUETP8M1_cfi --conditions auto:run2_mc --fast -n 100 --era Run2_2016 --beamspot Realistic50ns13TeVCollision --datatier AODSIM,DQMIO --eventcontent AODSIM,DQM -s GEN,SIM,RECOBEFMIX,DIGI:pdigi_valid,RECO,VALIDATION:tracksValidationTrackingOnly --python_filename fastsim.py --fileout fastsim.root --no_exe
+# with command line options: TTbar_13TeV_TuneCUETP8M1_cfi --conditions auto:run2_mc --fast -n 100000 --era Run2_2016 --beamspot Realistic50ns13TeVCollision --datatier AODSIM,DQMIO --eventcontent AODSIM,DQM -s GEN,SIM,RECOBEFMIX,DIGI:pdigi_valid,RECO,VALIDATION:tracksValidationTrackingOnly --python_filename fastsim.py --fileout fastsim.root --no_exe
 import FWCore.ParameterSet.Config as cms
 
 from Configuration.StandardSequences.Eras import eras
@@ -28,7 +28,7 @@ process.load('Configuration.StandardSequences.Validation_cff')
 process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
 
 process.maxEvents = cms.untracked.PSet(
-    input = cms.untracked.int32(1000)
+    input = cms.untracked.int32(100000)
 )
 
 # Input source
@@ -40,7 +40,7 @@ process.options = cms.untracked.PSet(
 
 # Production Info
 process.configurationMetadata = cms.untracked.PSet(
-    annotation = cms.untracked.string('TTbar_13TeV_TuneCUETP8M1_cfi nevts:1000'),
+    annotation = cms.untracked.string('TTbar_13TeV_TuneCUETP8M1_cfi nevts:100000'),
     name = cms.untracked.string('Applications'),
     version = cms.untracked.string('$Revision: 1.19 $')
 )
@@ -126,7 +126,7 @@ process.ProductionFilterSequence = cms.Sequence(process.generator)
 
 process.rechitanalysis = cms.EDAnalyzer("TrackDensityValidator",
         track_label = cms.InputTag("generalTracks"),
-        verbose = cms.untracked.int32(5),
+        verbose = cms.untracked.int32(1),
         outfile = cms.string('FastSim_Analyzer.root'),
         UseAssociators = cms.bool(True),
         associators = cms.untracked.VInputTag("quickTrackAssociatorByHits"),
