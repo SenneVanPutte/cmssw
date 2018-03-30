@@ -86,20 +86,30 @@ class TrackDensityValidator : public edm::EDAnalyzer {
       edm::EDGetTokenT<edm::View<reco::Track> > trackCollectionHandle;
       //const bool ignoremissingtkcollection_;
       TFile * fout;
-      TH1D * TrackDensity_higher;
-      TH1D * TrackDensity_mean;
-      TH2D * hPhiVsEta;
+      TH2D * hPt_mean_hdpt;
+      TH2D * hPt_mean_mdpt;
       TH2D * hPt_mean_hd;
       TH2D * hPt_stdev_hd;
       TH2D * hPt_mean_md;
       TH2D * hPt_stdev_md;
-      TH1D * TrackDensity_tp_higher;
-      TH1D * TrackDensity_tp_mean;
-      TH2D * hPhiVsEta_tp;
+      TH1D * TrackDensity_higher;
+      TH1D * TrackDensity_pt_higher;
+      TH1D * TrackDensity_mean;
+      TH1D * TrackDensity_pt_mean;
+      TH2D * hPhiVsEta;
+      TH2D * hPtVsEta;
+      TH2D * hPt_mean_tp_hdpt;
+      TH2D * hPt_mean_tp_mdpt;
       TH2D * hPt_mean_tp_hd;
       TH2D * hPt_stdev_tp_hd;
       TH2D * hPt_mean_tp_md;
       TH2D * hPt_stdev_tp_md;
+      TH1D * TrackDensity_tp_higher;
+      TH1D * TrackDensity_tp_pt_higher;
+      TH1D * TrackDensity_tp_mean;
+      TH1D * TrackDensity_tp_pt_mean;
+      TH2D * hPhiVsEta_tp;
+      TH2D * hPtVsEta_tp;
 };
 
 #endif
