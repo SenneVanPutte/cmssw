@@ -28,8 +28,7 @@ process.load('Configuration.StandardSequences.Validation_cff')
 process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
 
 process.maxEvents = cms.untracked.PSet(
-#    input = cms.untracked.int32(100000)
-    input = cms.untracked.int32(50)
+    input = cms.untracked.int32(100000)
 )
 
 # Input source
@@ -41,8 +40,7 @@ process.options = cms.untracked.PSet(
 
 # Production Info
 process.configurationMetadata = cms.untracked.PSet(
-#    annotation = cms.untracked.string('TTbar_13TeV_TuneCUETP8M1_cfi nevts:100000'),
-    annotation = cms.untracked.string('TTbar_13TeV_TuneCUETP8M1_cfi nevts:50'),
+    annotation = cms.untracked.string('TTbar_13TeV_TuneCUETP8M1_cfi nevts:100000'),
     name = cms.untracked.string('Applications'),
     version = cms.untracked.string('$Revision: 1.19 $')
 )
@@ -128,7 +126,7 @@ process.ProductionFilterSequence = cms.Sequence(process.generator)
 
 process.rechitanalysis = cms.EDAnalyzer("TrackDensityValidator",
         track_label = cms.InputTag("generalTracks"),
-        verbose = cms.untracked.int32(5),
+        verbose = cms.untracked.int32(1),
         outfile = cms.string('FastSim_Analyzer.root'),
         UseAssociators = cms.bool(True),
         associators = cms.untracked.VInputTag("quickTrackAssociatorByHits"),
