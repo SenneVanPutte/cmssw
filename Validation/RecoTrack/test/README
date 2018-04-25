@@ -1,3 +1,6 @@
+#COPY PROXY
+cp /tmp/x509up_u71150  /afs/cern.ch/user/d/ddicroce/.
+
 cmsDriver.py TTbar_13TeV_TuneCUETP8M1_cfi --conditions auto:run2_mc --fast -n 1000 --era Run2_2016 --beamspot Realistic50ns13TeVCollision --datatier AODSIM,DQMIO --eventcontent AODSIM,DQM -s GEN,SIM,RECOBEFMIX,DIGI:pdigi_valid,RECO,VALIDATION:tracksValidationTrackingOnly --python_filename fastsim.py --fileout fastsim.root --no_exe
 
 cmsDriver.py step3 \

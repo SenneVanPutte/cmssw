@@ -100,6 +100,20 @@ class TrackDensityValidator : public edm::EDAnalyzer {
       TH2D * hPt_stdev_tp_hd;
       TH2D * hPt_mean_tp_md;
       TH2D * hPt_stdev_tp_md;
+      TH2D * hPt_mean_hdpt;
+      TH2D * hEta_mean_hdpt;
+      TH2D * hPt_mean_mdpt;
+      TH2D * hEta_mean_mdpt;
+      TH1D * TrackDensity_pt_higher;
+      TH1D * TrackDensity_pt_mean;
+      TH2D * hPtVsEta;
+      TH2D * hPt_mean_tp_hdpt;
+      TH2D * hEta_mean_tp_hdpt;
+      TH2D * hPt_mean_tp_mdpt;
+      TH2D * hEta_mean_tp_mdpt;
+      TH1D * TrackDensity_tp_pt_higher;
+      TH1D * TrackDensity_tp_pt_mean;
+      TH2D * hPtVsEta_tp;
 };
 
 #endif

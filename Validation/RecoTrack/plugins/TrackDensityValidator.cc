@@ -191,8 +191,11 @@ TrackDensityValidator::analyze(const edm::Event& iEvent, const edm::EventSetup& 
     if (verbose > 3)
 	cout<<">>>>>>>>>>>>>>>>>>> Begining of the track loop"<<endl;
     TH2D * PhiVsEta = new TH2D("Track_scatter","Track Scatter", 10,-3.15,3.15, 10,-2.4,2.4);
+    TH2D * PtVsEta = new TH2D("PtVsEta","PtVsEta", 30,0,15, 10,-2.4,2.4);
     TH1D * Pt = new TH1D("Pt","Pt", 100,0,100);
+    TH1D * Eta = new TH1D("Eta","Eta", 100,-2.4,2.4);
     TH1D * hTrackDensity = new TH1D("hTrackDensity","hTrackDensity", 100,0,100);
+    TH1D * hTrackDensity_pt = new TH1D("hTrackDensity_pt","hTrackDensity_pt", 100,0,100);
     for(; itTrk != trkEnd; itTrk++){
       iTrack++;
       auto && p = itTrk->momentum();
@@ -200,14 +203,20 @@ TrackDensityValidator::analyze(const edm::Event& iEvent, const edm::EventSetup& 
       float phi = p.phi();
       float eta = p.eta();
       Pt->Fill(pt);
+      Eta->Fill(eta);
       PhiVsEta->Fill(phi,eta);
       hPhiVsEta->Fill(phi,eta);
+      PtVsEta->Fill(pt,eta);
+      hPtVsEta->Fill(pt,eta);
     }
     if(verbose > 3)
       cout<<"                        END OF TRACK LOOP!"<<endl;
     if (verbose > 4)
       cout<< iTrack <<" TRACKS !!"<<endl;
     double higherdensity = 0;
+    double higherdensity_pt = 0;
+    //double pt_higherdensity = 0;
+    //double eta_higherdensity = 0;
     for (int iBinx = 0; iBinx <= 10; iBinx++){
       for (int iBiny = 0; iBiny <= 10; iBiny++){
         double density = PhiVsEta->GetBinContent(iBinx,iBiny);
@@ -216,11 +225,27 @@ TrackDensityValidator::analyze(const edm::Event& iEvent, const edm::EventSetup& 
         if (higherdensity < density) higherdensity = density;
       }
     }
+    for (int iBinx = 0; iBinx <= 20; iBinx++){
+      for (int iBiny = 0; iBiny <= 10; iBiny++){
+        double density = PtVsEta->GetBinContent(iBinx,iBiny);
+        if (density== 0) continue;
+        hTrackDensity_pt->Fill(density);
+        if (higherdensity_pt < density){ 
+          higherdensity_pt = density;
+          //pt_higherdensity = iBinx*2.5+1.25;
+          //eta_higherdensity = iBiny*0.48-1.92;
+        }
+      }
+    }
     double pt_mean = Pt->GetMean();
+    double eta_mean = Eta->GetMean();
     double pt_stdev = Pt->GetStdDev();
     double meandensity = hTrackDensity->GetMean();
+    double meandensity_pt = hTrackDensity_pt->GetMean();
     if(verbose > 3)
-      cout<<"higherdensity = " << higherdensity <<"; meandensity = " << meandensity<<endl;
+      cout << "higherdensity = " << higherdensity <<"; meandensity = " << meandensity << endl;
+    if(verbose > 3)
+      cout << "higherdensity_pt = " << higherdensity_pt <<"; meandensity_pt = " << meandensity_pt << endl;
     if(verbose > 3)
       cout<<"pt  = " << pt_mean <<" +/- " << pt_stdev <<endl;
     TrackDensity_higher->Fill(higherdensity);
@@ -229,14 +254,23 @@ TrackDensityValidator::analyze(const edm::Event& iEvent, const edm::EventSetup& 
     hPt_stdev_hd->Fill(pt_stdev,higherdensity);
     hPt_mean_md ->Fill(pt_mean,meandensity);
     hPt_stdev_md->Fill(pt_stdev,meandensity);
+    TrackDensity_pt_higher->Fill(higherdensity_pt);
+    TrackDensity_pt_mean->Fill(meandensity_pt);
+    hPt_mean_hdpt->Fill(pt_mean,higherdensity_pt);
+    hEta_mean_hdpt->Fill(eta_mean,higherdensity_pt);
+    hPt_mean_mdpt->Fill(pt_mean,meandensity_pt);
+    hEta_mean_mdpt->Fill(eta_mean,meandensity_pt);
 
 
     ////////////////////////////////////////////////////
     // RECO SIM implementation /from tracking particles
     ///////////////////////////////////////////////////
     TH2D * PhiVsEta_tp = new TH2D("PhiVsEta_tp","PhiVsEta_tp", 10,-3.15,3.15, 10,-2.4,2.4);
+    TH2D * PtVsEta_tp = new TH2D("PtVsEta_tp","PtVsEta_tp", 30,0,15, 10,-2.4,2.4);
     TH1D * Pt_tp = new TH1D("Pt_tp","Pt_tp", 100,0,100);
+    TH1D * Eta_tp = new TH1D("Eta_tp","Eta_tp", 100,-2.4,2.4);
     TH1D * hTrackDensity_tp = new TH1D("hTrackDensity_tp","hTrackDensity_tp", 100,0,100);
+    TH1D * hTrackDensity_tp_pt = new TH1D("hTrackDensity_tp_pt","hTrackDensity_tp_pt", 100,0,100);
 
     edm::ESHandle<ParametersDefinerForTP> parametersDefinerTPHandle;
     iSetup.get<TrackAssociatorRecord>().get(parametersDefiner,parametersDefinerTPHandle);
@@ -372,8 +406,11 @@ TrackDensityValidator::analyze(const edm::Event& iEvent, const edm::EventSetup& 
             if (rt.size()!=0) {
               iTrack_tp++; //This counter counts the number of simTracks that have a recoTrack associated
               PhiVsEta_tp->Fill(phi,eta);
+              PtVsEta_tp->Fill(pt,eta);
               Pt_tp->Fill(pt);
+              Eta_tp->Fill(eta);
               hPhiVsEta_tp->Fill(phi,eta);
+              hPtVsEta_tp->Fill(pt,eta);
             }
           }
         }
@@ -382,6 +419,7 @@ TrackDensityValidator::analyze(const edm::Event& iEvent, const edm::EventSetup& 
         if (verbose > 4)
           cout<< iTrack_tp <<" TP TRACKS !!"<<endl;
         double higherdensity_tp = 0;
+        double higherdensity_tp_pt = 0;
         for (int iBinx = 0; iBinx <= 10; iBinx++){
           for (int iBiny = 0; iBiny <= 10; iBiny++){
             double density = PhiVsEta_tp->GetBinContent(iBinx,iBiny);
@@ -390,11 +428,23 @@ TrackDensityValidator::analyze(const edm::Event& iEvent, const edm::EventSetup& 
             if (higherdensity_tp < density) higherdensity_tp = density;
           }
         }
+        for (int iBinx = 0; iBinx <= 20; iBinx++){
+          for (int iBiny = 0; iBiny <= 10; iBiny++){
+            double density = PtVsEta_tp->GetBinContent(iBinx,iBiny);
+            if (density== 0) continue;
+            hTrackDensity_tp_pt->Fill(density);
+            if (higherdensity_tp_pt < density) higherdensity_tp_pt = density;
+          }
+        }
         double pt_mean_tp = Pt_tp->GetMean();
+        double eta_mean_tp = Eta_tp->GetMean();
         double pt_stdev_tp = Pt_tp->GetStdDev();
         double meandensity_tp = hTrackDensity_tp->GetMean();
+        double meandensity_tp_pt = hTrackDensity_tp_pt->GetMean();
         if(verbose > 3)
-          cout<<"tp higherdensity = " << higherdensity_tp <<"; tp meandensity = " << meandensity_tp<<endl;
+          cout << "tp higherdensity = " << higherdensity_tp << "; tp meandensity = " << meandensity_tp << endl;
+         if(verbose > 3)
+          cout << "tp higherdensity_pt = " << higherdensity_tp_pt << "; tp meandensity_pt = " << meandensity_tp_pt << endl;
         if(verbose > 3)
           cout<<"tp pt  = " << pt_mean_tp <<" +/- " << pt_stdev_tp <<endl;
         TrackDensity_tp_higher->Fill(higherdensity_tp);
@@ -403,6 +453,12 @@ TrackDensityValidator::analyze(const edm::Event& iEvent, const edm::EventSetup& 
         hPt_stdev_tp_hd->Fill(pt_stdev_tp,higherdensity_tp); 
         hPt_mean_tp_md ->Fill(pt_mean_tp,meandensity_tp);
         hPt_stdev_tp_md->Fill(pt_stdev_tp,meandensity_tp);
+        TrackDensity_tp_pt_higher->Fill(higherdensity_tp_pt);
+        TrackDensity_tp_pt_mean->Fill(meandensity_tp_pt);
+        hPt_mean_tp_hdpt->Fill(pt_mean_tp,higherdensity_tp_pt);
+        hEta_mean_tp_hdpt->Fill(eta_mean_tp,higherdensity_tp_pt);
+        hPt_mean_tp_mdpt->Fill(pt_mean_tp,meandensity_tp_pt);
+        hEta_mean_tp_mdpt->Fill(eta_mean_tp,meandensity_tp_pt);
       }
     }
 
@@ -412,20 +468,35 @@ TrackDensityValidator::analyze(const edm::Event& iEvent, const edm::EventSetup& 
 void 
 TrackDensityValidator::beginJob()
 {
-   hPt_mean_hd  = new TH2D("hPt_mean_hd","hPt_mean_hd", 100,0,100,100,0,100);
-   hPt_stdev_hd = new TH2D("hPt_stdev_hd","hPt_stdev_hd", 100,0,25,100,0,100);
-   hPt_mean_md  = new TH2D("hPt_mean_md","hPt_mean_md", 100,0,100,100,0,10);
-   hPt_stdev_md = new TH2D("hPt_stdev_md","hPt_stdev_md", 100,0,25,100,0,10);
-   TrackDensity_higher = new TH1D("TrackDensity_higher","TrackDensity_higher", 100,0,100);
-   TrackDensity_mean = new TH1D("TrackDensity_mean","TrackDensity_mean", 100,0,10);
+   hPt_mean_hd  = new TH2D("hPt_mean_hd","hPt_mean_hd", 20,0,20,15,0,30);
+   hPt_stdev_hd = new TH2D("hPt_stdev_hd","hPt_stdev_hd", 20,0,20,25,0,50);
+   hPt_mean_md  = new TH2D("hPt_mean_md","hPt_mean_md", 20,0,20,15,0,15);
+   hPt_stdev_md = new TH2D("hPt_stdev_md","hPt_stdev_md", 20,0,20,15,0,15);
+   TrackDensity_higher = new TH1D("TrackDensity_higher","TrackDensity_higher", 100,0,40);
+   TrackDensity_mean = new TH1D("TrackDensity_mean","TrackDensity_mean", 100,0,40);
    hPhiVsEta = new TH2D("hPhiVsEta","hPhiVsEta", 10,-3.15,3.15, 10,-2.4,2.4);
-   hPt_mean_tp_hd  = new TH2D("hPt_mean_tp_hd","hPt_mean_tp_hd", 100,0,100,100,0,100);
-   hPt_stdev_tp_hd = new TH2D("hPt_stdev_tp_hd","hPt_stdev_tp_hd", 100,0,25,100,0,100);
-   hPt_mean_tp_md  = new TH2D("hPt_mean_tp_md","hPt_mean_tp_md", 100,0,100,100,0,10);
-   hPt_stdev_tp_md = new TH2D("hPt_stdev_tp_md","hPt_stdev_tp_md", 100,0,25,100,0,10);
-   TrackDensity_tp_higher = new TH1D("TrackDensity_tp_higher","TrackDensity_tp_higher", 100,0,100);
-   TrackDensity_tp_mean = new TH1D("TrackDensity_tp_mean","TrackDensity_tp_mean", 100,0,10);
+   hPt_mean_tp_hd  = new TH2D("hPt_mean_tp_hd","hPt_mean_tp_hd", 20,0,20,15,0,30);
+   hPt_stdev_tp_hd = new TH2D("hPt_stdev_tp_hd","hPt_stdev_tp_hd", 20,0,20,25,0,50);
+   hPt_mean_tp_md  = new TH2D("hPt_mean_tp_md","hPt_mean_tp_md", 20,0,20,15,0,15);
+   hPt_stdev_tp_md = new TH2D("hPt_stdev_tp_md","hPt_stdev_tp_md", 20,0,20,15,0,15);
+   TrackDensity_tp_higher = new TH1D("TrackDensity_tp_higher","TrackDensity_tp_higher", 100,0,40);
+   TrackDensity_tp_mean = new TH1D("TrackDensity_tp_mean","TrackDensity_tp_mean", 100,0,40);
    hPhiVsEta_tp = new TH2D("hPhiVsEta_tp","hPhiVsEta_tp", 10,-3.15,3.15, 10,-2.4,2.4);
+/// PT and Eta study
+   hPt_mean_hdpt  = new TH2D("hPt_mean_hdpt","hPt_mean_hdpt", 20,0,20,15,0,30);
+   hEta_mean_hdpt  = new TH2D("hEta_mean_hdpt","hEta_mean_hdpt", 10,-2.4,2.4,15,0,30);
+   hPt_mean_mdpt  = new TH2D("hPt_mean_mdpt","hPt_mean_mdpt", 20,0,20,15,0,15);
+   hEta_mean_mdpt  = new TH2D("hEta_mean_mdpt","hEta_mean_mdpt", 10,-2.4,2.4,15,0,15);
+   TrackDensity_pt_higher = new TH1D("TrackDensity_pt_higher","TrackDensity_pt_higher", 100,0,40); 
+   TrackDensity_pt_mean = new TH1D("TrackDensity_pt_mean","TrackDensity_pt_mean", 100,0,40);
+   hPtVsEta = new TH2D("hPtVsEta","hPtVsEta", 30,0,15, 10,-2.4,2.4);
+   hPt_mean_tp_hdpt  = new TH2D("hPt_mean_tp_hdpt","hPt_mean_tp_hdpt", 20,0,20,15,0,30);
+   hEta_mean_tp_hdpt = new TH2D("hEta_mean_tp_hdpt","hEta_mean_tp_hdpt", 10,-2.4,2.4,15,0,30);
+   hPt_mean_tp_mdpt  = new TH2D("hPt_mean_tp_mdpt","hPt_mean_tp_mdpt", 20,0,20,15,0,15);
+   hEta_mean_tp_mdpt = new TH2D("hEta_mean_tp_mdpt","hEta_mean_tp_mdpt", 10,-2.4,2.4,15,0,15);
+   TrackDensity_tp_pt_higher = new TH1D("TrackDensity_tp_pt_higher","TrackDensity_tp_pt_higher", 100,0,40);
+   TrackDensity_tp_pt_mean = new TH1D("TrackDensity_tp_pt_mean","TrackDensity_tp_pt_mean", 100,0,40);
+   hPtVsEta_tp = new TH2D("hPtVsEta_tp","hPtVsEta_tp", 30,0,15, 10,-2.4,2.4); 
 }
 
 // ------------ method called once each job just after ending the iEvent loop  ------------
@@ -448,6 +519,20 @@ TrackDensityValidator::endJob()
    hPt_stdev_tp_hd->Write();
    hPt_mean_tp_md->Write(); 
    hPt_stdev_tp_md->Write();
+   TrackDensity_pt_higher->Write();
+   TrackDensity_pt_mean->Write();
+   hPtVsEta->Write();
+   hPt_mean_hdpt->Write();
+   hEta_mean_hdpt->Write();
+   hPt_mean_mdpt->Write();
+   hEta_mean_mdpt->Write();
+   TrackDensity_tp_pt_higher->Write();
+   TrackDensity_tp_pt_mean->Write();
+   hPtVsEta_tp->Write();
+   hPt_mean_tp_hdpt->Write();
+   hEta_mean_tp_hdpt->Write();
+   hPt_mean_tp_mdpt->Write();
+   hEta_mean_tp_mdpt->Write();
    fout->Close();
 }
 

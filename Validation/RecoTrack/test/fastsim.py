@@ -29,6 +29,7 @@ process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
 
 process.maxEvents = cms.untracked.PSet(
     input = cms.untracked.int32(100000)
+#    input = cms.untracked.int32(50)
 )
 
 # Input source
@@ -41,6 +42,7 @@ process.options = cms.untracked.PSet(
 # Production Info
 process.configurationMetadata = cms.untracked.PSet(
     annotation = cms.untracked.string('TTbar_13TeV_TuneCUETP8M1_cfi nevts:100000'),
+#    annotation = cms.untracked.string('TTbar_13TeV_TuneCUETP8M1_cfi nevts:50'),
     name = cms.untracked.string('Applications'),
     version = cms.untracked.string('$Revision: 1.19 $')
 )
