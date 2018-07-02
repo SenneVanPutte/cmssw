@@ -202,31 +202,30 @@ TracksProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     //Pt_stdev_tp.clear();
     //Eta_mean_tp.clear();
 
-    if (verbose > 4)
-      cout<<">>>>>>>>>>>>>>>>>>> Begining of the event loop"<<endl;
+    if (verbose > 4) cout<<">>>>>>>>>>>>>>>>>>> Begining of the event loop"<<endl;
 
     Handle<reco::TrackCollection> track_handle;
     iEvent.getByToken(track_label, track_handle);
 
     eventy = iEvent.id().event();
-    cout<<"====Event: " << eventy << endl; 
+    //cout<<"====Event: " << eventy << endl; 
 
     nrt = 0;
     reco::TrackCollection::const_iterator itTrk = track_handle->begin();
     reco::TrackCollection::const_iterator trkEnd = track_handle->end();
     if (verbose > 3) cout<<">>>>>>>>>>>>>>>>>>> Begining of the track loop"<<endl;
     for(; itTrk != trkEnd; itTrk++){
-      auto && p = itTrk->momentum();
-      rt_pt[nrt] = sqrt(p.perp2());
-      rt_phi[nrt] = p.phi();
-      rt_eta[nrt] = p.eta();
-      if (p.phi() > 3.15) { 
-          std::cout << "pt: " << sqrt(p.perp2()) << ", eta: " <<  p.eta() << ", phi: " << p.phi() << std::endl;
-          std::cout << *rt_eta << std::endl;
-          throw std::invalid_argument( "phi to high" );
-      }
-      //std::cout << "rt_pt = " << sqrt(p.perp2()) << " rt_phi = " << p.phi() << " rt_eta = " << p.eta() << std::endl;
-      nrt++;
+        auto && p = itTrk->momentum();
+        rt_pt[nrt] = sqrt(p.perp2());
+        rt_phi[nrt] = p.phi();
+        rt_eta[nrt] = p.eta();
+        if (p.phi() > 3.15) { 
+            std::cout << "pt: " << sqrt(p.perp2()) << ", eta: " <<  p.eta() << ", phi: " << p.phi() << std::endl;
+            std::cout << *rt_eta << std::endl;
+            throw std::invalid_argument( "phi to high" );
+        }
+        //std::cout << "rt_pt = " << sqrt(p.perp2()) << " rt_phi = " << p.phi() << " rt_eta = " << p.eta() << std::endl;
+        nrt++;
     }
     if(verbose > 3) cout<<"                        END OF TRACK LOOP!"<<endl;
     if (verbose > 4) cout<< nrt <<" TRACKS !!"<<endl;
@@ -239,7 +238,6 @@ TracksProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     auto parametersDefinerTP = parametersDefinerTPHandle->clone();
     //Since we modify the object, we must clone it
 
-    nst = 0; 
     int w=0; //counter counting the number of sets of histograms
     TrackingParticleRefVector tmpTPeff;
     TrackingParticleRefVector tmpTPfake;
@@ -251,28 +249,29 @@ TracksProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 
     const bool tp_effic_refvector = label_tp_effic.isUninitialized();
     if(!tp_effic_refvector) {
-      iEvent.getByToken(label_tp_effic, TPCollectionHeff);
-      for(size_t i=0, size=TPCollectionHeff->size(); i<size; ++i) {
-        tmpTPeff.push_back(TrackingParticleRef(TPCollectionHeff, i));
-      }
-      tmpTPeffPtr = &tmpTPeff;
+        iEvent.getByToken(label_tp_effic, TPCollectionHeff);
+        for(size_t i=0, size=TPCollectionHeff->size(); i<size; ++i) {
+            tmpTPeff.push_back(TrackingParticleRef(TPCollectionHeff, i));
+        }
+        cout << "TPCollectionHeff->size()=" << TPCollectionHeff->size() << endl;
+        tmpTPeffPtr = &tmpTPeff;
     }
     else {
-      iEvent.getByToken(label_tp_effic_refvector, TPCollectionHeffRefVector);
-      tmpTPeffPtr = TPCollectionHeffRefVector.product();
+        iEvent.getByToken(label_tp_effic_refvector, TPCollectionHeffRefVector);
+        tmpTPeffPtr = TPCollectionHeffRefVector.product();
     }
     if(!label_tp_fake.isUninitialized()) {
-      edm::Handle<TrackingParticleCollection> TPCollectionHfake ;
-      iEvent.getByToken(label_tp_fake,TPCollectionHfake);
-      for(size_t i=0, size=TPCollectionHfake->size(); i<size; ++i) {
-      tmpTPfake.push_back(TrackingParticleRef(TPCollectionHfake, i));
-      }
+        edm::Handle<TrackingParticleCollection> TPCollectionHfake ;
+        iEvent.getByToken(label_tp_fake,TPCollectionHfake);
+        for(size_t i=0, size=TPCollectionHfake->size(); i<size; ++i) {
+            tmpTPfake.push_back(TrackingParticleRef(TPCollectionHfake, i));
+        }
       tmpTPfakePtr = &tmpTPfake;
     }
     else {
-      edm::Handle<TrackingParticleRefVector> TPCollectionHfakeRefVector;
-      iEvent.getByToken(label_tp_fake_refvector, TPCollectionHfakeRefVector);
-      tmpTPfakePtr = TPCollectionHfakeRefVector.product();
+        edm::Handle<TrackingParticleRefVector> TPCollectionHfakeRefVector;
+        iEvent.getByToken(label_tp_fake_refvector, TPCollectionHfakeRefVector);
+        tmpTPfakePtr = TPCollectionHfakeRefVector.product();
     }
 
     TrackingParticleRefVector const & tPCeff = *tmpTPeffPtr;
@@ -283,101 +282,118 @@ TracksProducer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
     reco::BeamSpot const & bs = *recoBeamSpotHandle;
 
     std::vector<size_t> selected_tPCeff;
+    //cout << "0 selected_tPCeff.size()=" << selected_tPCeff.size() << endl; 
     std::vector<std::tuple<TrackingParticle::Vector, TrackingParticle::Point>> momVert_tPCeff;
     tpParametersAndSelection(tPCeff, *parametersDefinerTP, iEvent, iSetup, bs, momVert_tPCeff, selected_tPCeff);
+    //cout << "1 selected_tPCeff.size()=" << selected_tPCeff.size() << endl; 
+
+    //cout << "Contetnt:";
+    //for (auto idx: selected_tPCeff){ cout << " " << idx;}
+    //cout << endl;
 
     for (unsigned int ww=0;ww<associators.size();ww++){
-      // run value filtering of recoToSim map already here as it depends only on the association, not track collection
-      reco::RecoToSimCollection const * recSimCollP=nullptr;
-      reco::RecoToSimCollection recSimCollL;
-      if(!useAssociators_) {
-        Handle<reco::SimToRecoCollection > simtorecoCollectionH;
-        iEvent.getByToken(associatormapStRs[ww], simtorecoCollectionH);
+        // run value filtering of recoToSim map already here as it depends only on the association, not track collection
+        reco::RecoToSimCollection const * recSimCollP=nullptr;
+        reco::RecoToSimCollection recSimCollL;
+        if(!useAssociators_) {
+            Handle<reco::SimToRecoCollection > simtorecoCollectionH;
+            iEvent.getByToken(associatormapStRs[ww], simtorecoCollectionH);
 
-        Handle<reco::RecoToSimCollection > recotosimCollectionH;
-        iEvent.getByToken(associatormapRtSs[ww],recotosimCollectionH);
-        recSimCollP = recotosimCollectionH.product();
+            Handle<reco::RecoToSimCollection > recotosimCollectionH;
+            iEvent.getByToken(associatormapRtSs[ww],recotosimCollectionH);
+            recSimCollP = recotosimCollectionH.product();
 
-        // We need to filter the associations of the fake-TrackingParticle
-        // collection only from RecoToSim collection, otherwise the
-        // RecoToSim histograms get false entries
-        recSimCollL = associationMapFilterValues(*recSimCollP, tPCfake);
-        recSimCollP = &recSimCollL;
+            // We need to filter the associations of the fake-TrackingParticle
+            // collection only from RecoToSim collection, otherwise the
+            // RecoToSim histograms get false entries
+            recSimCollL = associationMapFilterValues(*recSimCollP, tPCfake);
+            recSimCollP = &recSimCollL;
       }
 
-      for (unsigned int www=0;www<label.size();www++, w++){   
-        edm::Handle<View<reco::Track> >  trackCollectionHandle;
-        if(!iEvent.getByToken(labelToken[www], trackCollectionHandle)&&ignoremissingtkcollection_)continue;
-        const edm::View<reco::Track>& trackCollection = *trackCollectionHandle;
-        reco::SimToRecoCollection const * simRecCollP=nullptr;
-        reco::SimToRecoCollection simRecCollL;
-        //associate tracks
-        if(useAssociators_){
-          edm::Handle<reco::TrackToTrackingParticleAssociator> theAssociator;
-          iEvent.getByToken(associatorTokens[ww], theAssociator);
+      for (unsigned int www=0;www<label.size();www++, w++){
+          //std::cout << "www=" << www << std::endl;   
+          edm::Handle<View<reco::Track> >  trackCollectionHandle;
+          if(!iEvent.getByToken(labelToken[www], trackCollectionHandle)&&ignoremissingtkcollection_)continue;
+          const edm::View<reco::Track>& trackCollection = *trackCollectionHandle;
+          reco::SimToRecoCollection const * simRecCollP=nullptr;
+          reco::SimToRecoCollection simRecCollL;
+          //associate tracks
+          if(useAssociators_){
+              edm::Handle<reco::TrackToTrackingParticleAssociator> theAssociator;
+              iEvent.getByToken(associatorTokens[ww], theAssociator);
   
-          edm::RefToBaseVector<reco::Track> trackRefs;
-          for(edm::View<reco::Track>::size_type i=0; i<trackCollection.size(); ++i) {
-            trackRefs.push_back(trackCollection.refAt(i));
+              edm::RefToBaseVector<reco::Track> trackRefs;
+              for(edm::View<reco::Track>::size_type i=0; i<trackCollection.size(); ++i) {
+                  trackRefs.push_back(trackCollection.refAt(i));
+              }
+  
+              recSimCollL = std::move(theAssociator->associateRecoToSim(trackRefs, tPCfake));
+              recSimCollP = &recSimCollL;
+              // It is necessary to do the association wrt. fake TPs.
+              simRecCollL = std::move(theAssociator->associateSimToReco(trackRefs, tPCfake));
+              simRecCollP = &simRecCollL;
           }
-  
-          recSimCollL = std::move(theAssociator->associateRecoToSim(trackRefs, tPCfake));
-          recSimCollP = &recSimCollL;
-          // It is necessary to do the association wrt. fake TPs.
-          simRecCollL = std::move(theAssociator->associateSimToReco(trackRefs, tPCfake));
-          simRecCollP = &simRecCollL;
-        }
-        reco::RecoToSimCollection const & recSimColl = *recSimCollP;
-        reco::SimToRecoCollection const & simRecColl = *simRecCollP;
+          reco::RecoToSimCollection const & recSimColl = *recSimCollP;
+          reco::SimToRecoCollection const & simRecColl = *simRecCollP;
+          /*
+          cout << "2 selected_tPCeff.size()=" << selected_tPCeff.size() << endl; 
+          cout << "selected_tPCeff= ";
+          size_t sel_count=0;
+          size_t j=0;
+          for(auto const& tpr: tPCeff) {
+              const TrackingParticle& tp = *tpr;
+              // TODO: do we want to fill these from all TPs that include IT
+              // and OOT (as below), or limit to IT+OOT TPs passing tpSelector
+              // (as it was before)? The latter would require another instance
+              // of tpSelector with intimeOnly=False.
+              if(tpSelector(tp)){
+                  ++sel_count;
+                  cout << j << " ";
+                  selected_tPCeff.push_back(j);
+                  TrackingParticle::Vector momentum;
+                  momentum = parametersDefinerTP->momentum(iEvent,iSetup,tpr);
+                  TrackingParticle::Point vertex;
+                  vertex = parametersDefinerTP->vertex(iEvent,iSetup,tpr);
+                  momVert_tPCeff.emplace_back(momentum, vertex);
+              }
+              ++j;
+          }
+          cout << endl; 
+          cout << "sel_count=" << sel_count << endl;*/
 
-        size_t j=0;
-        for(auto const& tpr: tPCeff) {
-          const TrackingParticle& tp = *tpr;
-          // TODO: do we want to fill these from all TPs that include IT
-          // and OOT (as below), or limit to IT+OOT TPs passing tpSelector
-          // (as it was before)? The latter would require another instance
-          // of tpSelector with intimeOnly=False.
-          if(tpSelector(tp)){
-            selected_tPCeff.push_back(j);
-            TrackingParticle::Vector momentum;
-            momentum = parametersDefinerTP->momentum(iEvent,iSetup,tpr);
-            TrackingParticle::Point vertex;
-            vertex = parametersDefinerTP->vertex(iEvent,iSetup,tpr);
-            momVert_tPCeff.emplace_back(momentum, vertex);
+          // ########################################################
+          // fill simulation histograms (LOOP OVER TRACKINGPARTICLES)
+          // ########################################################
+          //loop over already-selected TPs for tracking efficiency
+          if (verbose > 3) cout<<">>>>>>>>>>>>>>>>>>> Begining of the track loop"<<endl;
+          nst = 0;
+          //cout << "3 selected_tPCeff.size()=" << selected_tPCeff.size() << endl; 
+          for(size_t i=0; i<selected_tPCeff.size(); ++i) {
+              size_t iTP = selected_tPCeff[i];
+              const TrackingParticleRef& tpr = tPCeff[iTP];
+              const TrackingParticle& tp = *tpr;
+              auto const& momVert = momVert_tPCeff[i];
+              const TrackingParticle::Vector& momentumTP = std::get<TrackingParticle::Vector>(momVert);
+              float pt = sqrt(momentumTP.perp2());
+              float phi = momentumTP.phi();
+              float eta = momentumTP.eta();
+              if(simRecColl.find(tpr) != simRecColl.end()){
+                  auto const & rt = simRecColl[tpr];
+                  if (rt.size()!=0) {
+                      st_pt[nst] = pt;
+                      st_eta[nst] = eta;
+                      st_phi[nst] = phi;
+                      //std::cout << "st_pt = " << pt << " st_phi = " << phi << " st_eta = " << eta << std::endl;
+                      nst++; //This counter counts the number of simTracks that have a recoTrack associated
+                  }
+              }
           }
-          ++j;
-        }
-   
-        // ########################################################
-        // fill simulation histograms (LOOP OVER TRACKINGPARTICLES)
-        // ########################################################
-        //loop over already-selected TPs for tracking efficiency
-        if (verbose > 3) cout<<">>>>>>>>>>>>>>>>>>> Begining of the track loop"<<endl;
-        for(size_t i=0; i<selected_tPCeff.size(); ++i) {
-          size_t iTP = selected_tPCeff[i];
-          const TrackingParticleRef& tpr = tPCeff[iTP];
-          const TrackingParticle& tp = *tpr;
-          auto const& momVert = momVert_tPCeff[i];
-          const TrackingParticle::Vector& momentumTP = std::get<TrackingParticle::Vector>(momVert);
-          float pt = sqrt(momentumTP.perp2());
-          float phi = momentumTP.phi();
-          float eta = momentumTP.eta();
-          if(simRecColl.find(tpr) != simRecColl.end()){
-            auto const & rt = simRecColl[tpr];
-            if (rt.size()!=0) {
-              st_pt[nst] = pt;
-              st_eta[nst] = eta;
-              st_phi[nst] = phi;
-              //std::cout << "st_pt = " << pt << " st_phi = " << phi << " st_eta = " << eta << std::endl;
-              nst++; //This counter counts the number of simTracks that have a recoTrack associated
-            }
-          }
-        }
-        if(verbose > 3) cout<<"                        END OF TP TRACK LOOP!"<<endl;
-        if (verbose > 4) cout<< nst <<" TP TRACKS !!"<<endl;
-        tree->Fill();
+          //cout << "nST=" << nst << endl;
+          if(verbose > 3) cout<<"                        END OF TP TRACK LOOP!"<<endl;
+          if (verbose > 4) cout<< nst <<" TP TRACKS !!"<<endl;
+          tree->Fill();
       }
-    }
+   }
 
 }
 

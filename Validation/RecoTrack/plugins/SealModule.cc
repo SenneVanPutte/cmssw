@@ -8,7 +8,6 @@
 #include "Validation/RecoTrack/interface/SiPixelTrackingRecHitsValid.h"
 
 #include "Validation/RecoTrack/interface/TrackDensityValidator.h"
-#include "Validation/RecoTrack/interface/TrackDensityProducer.h"
 #include "Validation/RecoTrack/interface/TracksProducer.h"
 
 DEFINE_FWK_MODULE(MultiTrackValidator);

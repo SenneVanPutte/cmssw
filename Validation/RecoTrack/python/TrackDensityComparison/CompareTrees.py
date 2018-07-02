@@ -151,6 +151,11 @@ fast_ST_integrated_ptVeta_TH2 = ROOT.TH2D("Fast_ST_integrated_ptVeta","Fast_ST_i
 full_RT_integrated_ptVeta_TH2 = ROOT.TH2D("Full_RT_integrated_ptVeta","Full_RT_integrated_ptVeta", 30,0,15, n_eta,-2.4,2.4) 
 full_ST_integrated_ptVeta_TH2 = ROOT.TH2D("Full_ST_integrated_ptVeta","Full_ST_integrated_ptVeta", 30,0,15, n_eta,-2.4,2.4) 
 
+fast_RT_maxTptDVmaxTD_TH2 = ROOT.TH2D("Fast_RT_maxTptDVmaxTD","Fast_RT_maxTptDVmaxTD", 30,0,30, 25,0,25)
+fast_ST_maxTptDVmaxTD_TH2 = ROOT.TH2D("Fast_ST_maxTptDVmaxTD","Fast_ST_maxTptDVmaxTD", 30,0,30, 25,0,25)
+full_RT_maxTptDVmaxTD_TH2 = ROOT.TH2D("Full_RT_maxTptDVmaxTD","Full_RT_maxTptDVmaxTD", 30,0,30, 25,0,25)
+full_ST_maxTptDVmaxTD_TH2 = ROOT.TH2D("Full_ST_maxTptDVmaxTD","Full_ST_maxTptDVmaxTD", 30,0,30, 25,0,25)
+
 print('Initializing comparison histograms')
 # Comparison histograms (fastTD - fullTD or distance between)
 nB_phiVeta_phi = fast_RT_phiVeta_TH2.GetNbinsX() 
@@ -575,6 +580,11 @@ for i in range(nEntries):
     fast_ST_meanEtaVmeanTptD_TH2.Fill(fast_ST_Eta_mean, fast_ST_TptD_mean)
     full_RT_meanEtaVmeanTptD_TH2.Fill(full_RT_Eta_mean, full_RT_TptD_mean)
     full_ST_meanEtaVmeanTptD_TH2.Fill(full_ST_Eta_mean, full_ST_TptD_mean)
+
+    fast_RT_maxTptDVmaxTD_TH2.Fill(fast_RT_TptD_max, fast_RT_TD_max)
+    fast_ST_maxTptDVmaxTD_TH2.Fill(fast_ST_TptD_max, fast_ST_TD_max)
+    full_RT_maxTptDVmaxTD_TH2.Fill(full_RT_TptD_max, full_RT_TD_max)
+    full_ST_maxTptDVmaxTD_TH2.Fill(full_ST_TptD_max, full_ST_TD_max)
     
     # Reset density histograms
     fast_RT_phiVeta_TH2.Reset()
@@ -751,6 +761,11 @@ fast_RT_meanEtaVmeanTptD_TH2.Write()
 fast_ST_meanEtaVmeanTptD_TH2.Write()
 full_RT_meanEtaVmeanTptD_TH2.Write()
 full_ST_meanEtaVmeanTptD_TH2.Write()
+    
+fast_RT_maxTptDVmaxTD_TH2.Write()
+fast_ST_maxTptDVmaxTD_TH2.Write()
+full_RT_maxTptDVmaxTD_TH2.Write()
+full_ST_maxTptDVmaxTD_TH2.Write()
 
 ffDiff_nRT_TH1.Write()
 ffDiff_nST_TH1.Write()
