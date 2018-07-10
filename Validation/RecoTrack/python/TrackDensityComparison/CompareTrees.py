@@ -3,6 +3,18 @@ import sys
 import time
 import math
 import numpy as np
+import optparse
+from optparse import OptionParser
+
+#---------------------------Option-Parsing---------------------------
+usage = 'usage: %prog [options]'
+parser = optparse.OptionParser(usage)
+parser.add_option('--full', dest='full_file', help='Input file Full Simulation', default='FullSIM_merged.root', type='string')
+parser.add_option('--fast', dest='fast_file', help='Input file Fast Simulation', default='FastSIM_merged.root', type='string')
+parser.add_option('-o', '--output', dest='output_file', help='Output file name and dir', default='fullVfast.root', type='string')
+parser.add_option('-n', '--nevent', dest='num_event', help='Number of events to loop', type='int')
+(options, args) = parser.parse_args()
+#print(options)
 
 #---------------------------Useful-Func---------------------------
 PI = 3.1415927
@@ -14,9 +26,9 @@ def truc_phidist(dist):
 
 #---------------------------Start-Prosess---------------------------
 
-ifn_full = 'FullSIM_merged.root'
-ifn_fast = 'FastSIM_merged.root'
-ofn = 'compare_100.root'
+ifn_full = options.full_file
+ifn_fast = options.fast_file
+ofn = options.output_file
 
 print("Opening: " + ifn_full + " and " + ifn_fast)
 
@@ -32,6 +44,7 @@ print("Tree's loaded")
 
 n_full = full_tree.GetEntries()
 n_fast = fast_tree.GetEntries()
+n_min = min(n_full, n_fast)
 
 print('Fullsim tree has: ' + str(n_full) + ' events')
 print('Fastsim tree has: ' + str(n_fast) + ' events')
@@ -156,6 +169,19 @@ fast_ST_maxTptDVmaxTD_TH2 = ROOT.TH2D("Fast_ST_maxTptDVmaxTD","Fast_ST_maxTptDVm
 full_RT_maxTptDVmaxTD_TH2 = ROOT.TH2D("Full_RT_maxTptDVmaxTD","Full_RT_maxTptDVmaxTD", 30,0,30, 25,0,25)
 full_ST_maxTptDVmaxTD_TH2 = ROOT.TH2D("Full_ST_maxTptDVmaxTD","Full_ST_maxTptDVmaxTD", 30,0,30, 25,0,25)
 
+fast_nRT_over_nST_TH1 = ROOT.TH1D("Fast_nRT_over_nST", "Fast_nRT_over_nST", 50,0,10)
+full_nRT_over_nST_TH1 = ROOT.TH1D("Full_nRT_over_nST", "Full_nRT_over_nST", 50,0,10)
+
+fast_nRT_over_nST_phiVeta_BinAverage_TH2 = ROOT.TH2D("Fast_nRT_over_nST_phiVeta_BinAverage", "Fast_nRT_over_nST_phiVeta_BinAverage", n_phi,-PI,PI, n_eta,-2.4,2.4)
+full_nRT_over_nST_phiVeta_BinAverage_TH2 = ROOT.TH2D("Full_nRT_over_nST_phiVeta_BinAverage", "Full_nRT_over_nST_phiVeta_BinAverage", n_phi,-PI,PI, n_eta,-2.4,2.4)
+fast_nRT_over_nST_ptVeta_BinAverage_TH2 = ROOT.TH2D("Fast_nRT_over_nST_ptVeta_BinAverage", "Fast_nRT_over_nST_ptVeta_BinAverage", 30,0,15, n_eta,-2.4,2.4)
+full_nRT_over_nST_ptVeta_BinAverage_TH2 = ROOT.TH2D("Full_nRT_over_nST_ptVeta_BinAverage", "Full_nRT_over_nST_ptVeta_BinAverage", 30,0,15, n_eta,-2.4,2.4)
+
+fast_nRT_over_nST_phiVeta_BinStdev_TH2 = ROOT.TH2D("Fast_nRT_over_nST_phiVeta_BinStdev", "Fast_nRT_over_nST_phiVeta_BinStdev", n_phi,-PI,PI, n_eta,-2.4,2.4)
+full_nRT_over_nST_phiVeta_BinStdev_TH2 = ROOT.TH2D("Full_nRT_over_nST_phiVeta_BinStdev", "Full_nRT_over_nST_phiVeta_BinStdev", n_phi,-PI,PI, n_eta,-2.4,2.4)
+fast_nRT_over_nST_ptVeta_BinStdev_TH2 = ROOT.TH2D("Fast_nRT_over_nST_ptVeta_BinStdev", "Fast_nRT_over_nST_ptVeta_BinStdev", 30,0,15, n_eta,-2.4,2.4)
+full_nRT_over_nST_ptVeta_BinStdev_TH2 = ROOT.TH2D("Full_nRT_over_nST_ptVeta_BinStdev", "Full_nRT_over_nST_ptVeta_BinStdev", 30,0,15, n_eta,-2.4,2.4)
+
 print('Initializing comparison histograms')
 # Comparison histograms (fastTD - fullTD or distance between)
 nB_phiVeta_phi = fast_RT_phiVeta_TH2.GetNbinsX() 
@@ -178,6 +204,28 @@ nB_dist = 40
 dist_phi_up = PI
 dist_phi_dn = 0
 nB_dist_phi = int(n_phi/2)
+
+fast_nRT_over_nST_dict = {}
+fast_nRT_over_nST_dict['phiVeta'] = {}
+fast_nRT_over_nST_dict['ptVeta'] = {}
+for iEta in range(1,nB_phiVeta_eta+1):
+    for iPhi in range(1,nB_phiVeta_phi+1):
+        name = str(iPhi)+'_'+str(iEta)
+        fast_nRT_over_nST_dict['phiVeta'][name] = ROOT.TH1D('fast_phiVeta_'+name, 'fast_phiVeta_'+name, 50,0,10)
+    for iPt in range(1,nB_ptVeta_pt+1):
+        name = str(iPt)+'_'+str(iEta)
+        fast_nRT_over_nST_dict['ptVeta'][name] = ROOT.TH1D('fast_ptVeta_'+name, 'fast_ptVeta_'+name, 50,0,10)
+
+full_nRT_over_nST_dict = {}
+full_nRT_over_nST_dict['phiVeta'] = {}
+full_nRT_over_nST_dict['ptVeta'] = {}
+for iEta in range(1,nB_phiVeta_eta+1):
+    for iPhi in range(1,nB_phiVeta_phi+1):
+        name = str(iPhi)+'_'+str(iEta)
+        full_nRT_over_nST_dict['phiVeta'][name] = ROOT.TH1D('full_phiVeta_'+name, 'full_phiVeta_'+name, 50,0,10)
+    for iPt in range(1,nB_ptVeta_pt+1):
+        name = str(iPt)+'_'+str(iEta)
+        full_nRT_over_nST_dict['ptVeta'][name] = ROOT.TH1D('full_ptVeta_'+name, 'full_ptVeta_'+name, 50,0,10)
 
 ffDiff_RT_TDphi = {}
 #for iPhi in range(1,nB_phiVeta_phi+1):
@@ -268,7 +316,12 @@ ffDiff_nST_TH1 = ROOT.TH1D('nST_diff', 'nST_diff', 400,-200,200)
 
 #---------------------------Start-Loop---------------------------
 print('Loop starting: ')
-nEntries = 5000 # n_full
+if options.num_event is not None:
+    if options.num_event < n_min: nEntries = options.num_event
+    else: 
+        print(' -Warning: #event passed was ' + str(options.num_event) + ', but smallest input file contained only ' + str(n_min) + ' events. '+ str(n_min) + ' was set.') 
+        nEntries = n_min
+else: nEntries = n_min
 nupd = 40
 upd = (nEntries + 0.0)/nupd
 npr = min(50,upd)
@@ -424,9 +477,13 @@ for i in range(nEntries):
             if fast_dens != 0:
                 fast_ST_TD_TH1.Fill(fast_dens)
                 temp_fast_ST_TD_TH1.Fill(fast_dens)
+                RT_dens = fast_RT_phiVeta_TH2.GetBinContent(iPhi,iEta)
+                fast_nRT_over_nST_dict['phiVeta'][str(iPhi)+'_'+str(iEta)].Fill((RT_dens + 0.0)/(fast_dens + 0.0))
             if full_dens != 0: 
                 full_ST_TD_TH1.Fill(full_dens)
                 temp_full_ST_TD_TH1.Fill(full_dens)
+                RT_dens = full_RT_phiVeta_TH2.GetBinContent(iPhi,iEta)
+                full_nRT_over_nST_dict['phiVeta'][str(iPhi)+'_'+str(iEta)].Fill((RT_dens + 0.0)/(full_dens + 0.0))
 
     full_ST_TptD_max = 0
     fast_ST_TptD_max = 0
@@ -436,8 +493,8 @@ for i in range(nEntries):
     fast_ST_TptD_max_idxeta = -1
     for iPt in range(1,nB_ptVeta_pt+1):
         for iEta in range(1,nB_ptVeta_eta+1):
-            fast_dens = fast_ST_ptVeta_TH2.GetBinContent(iPhi,iEta)
-            full_dens = full_ST_ptVeta_TH2.GetBinContent(iPhi,iEta)
+            fast_dens = fast_ST_ptVeta_TH2.GetBinContent(iPt,iEta)
+            full_dens = full_ST_ptVeta_TH2.GetBinContent(iPt,iEta)
             if fast_dens == 0 and full_dens == 0: continue
             if fast_ST_TptD_max < fast_dens:
                 fast_ST_TptD_max = fast_dens
@@ -455,13 +512,20 @@ for i in range(nEntries):
             if fast_dens != 0: 
                 fast_ST_TptD_TH1.Fill(fast_dens)
                 temp_fast_ST_TptD_TH1.Fill(fast_dens)
+                RT_dens = fast_RT_ptVeta_TH2.GetBinContent(iPt,iEta)
+                fast_nRT_over_nST_dict['ptVeta'][str(iPt)+'_'+str(iEta)].Fill((RT_dens + 0.0)/(fast_dens + 0.0))
             if full_dens != 0: 
                 full_ST_TptD_TH1.Fill(full_dens)
                 temp_full_ST_TptD_TH1.Fill(full_dens)
+                RT_dens = full_RT_ptVeta_TH2.GetBinContent(iPt,iEta)
+                full_nRT_over_nST_dict['ptVeta'][str(iPt)+'_'+str(iEta)].Fill((RT_dens + 0.0)/(full_dens + 0.0))
     
 
     ffDiff_nRT_TH1.Fill(fast_tree.nRT - full_tree.nRT)
     ffDiff_nST_TH1.Fill(fast_tree.nST - full_tree.nST)
+
+    fast_nRT_over_nST_TH1.Fill((fast_tree.nRT+0.0)/(fast_tree.nST+0.0))
+    full_nRT_over_nST_TH1.Fill((full_tree.nRT+0.0)/(full_tree.nST+0.0))
 
     fast_RT_Pt_mean = np.mean(fast_RT_pt)
     full_RT_Pt_mean = np.mean(full_RT_pt)
@@ -629,6 +693,28 @@ print(' --Done:     event (%6i/%6i), [' % (nEntries, nEntries) + nupd*'=' + '], 
 print('Loop done')
 #---------------------------Finish-Loop---------------------------
 
+for iPhi in range(1,nB_phiVeta_phi+1):
+    for iEta in range(1,nB_phiVeta_eta+1):
+        fast_mean = fast_nRT_over_nST_dict['phiVeta'][str(iPhi)+'_'+str(iEta)].GetMean()
+        full_mean = full_nRT_over_nST_dict['phiVeta'][str(iPhi)+'_'+str(iEta)].GetMean()
+        fast_stdev = fast_nRT_over_nST_dict['phiVeta'][str(iPhi)+'_'+str(iEta)].GetStdDev()
+        full_stdev = full_nRT_over_nST_dict['phiVeta'][str(iPhi)+'_'+str(iEta)].GetStdDev()
+        fast_nRT_over_nST_phiVeta_BinAverage_TH2.SetBinContent(iPhi, iEta, fast_mean)        
+        full_nRT_over_nST_phiVeta_BinAverage_TH2.SetBinContent(iPhi, iEta, full_mean)        
+        fast_nRT_over_nST_phiVeta_BinStdev_TH2.SetBinContent(iPhi, iEta, fast_stdev)        
+        full_nRT_over_nST_phiVeta_BinStdev_TH2.SetBinContent(iPhi, iEta, full_stdev)        
+
+for iPt in range(1,nB_ptVeta_pt+1):
+    for iEta in range(1,nB_ptVeta_eta+1):
+        fast_mean = fast_nRT_over_nST_dict['ptVeta'][str(iPt)+'_'+str(iEta)].GetMean()
+        full_mean = full_nRT_over_nST_dict['ptVeta'][str(iPt)+'_'+str(iEta)].GetMean()
+        fast_stdev = fast_nRT_over_nST_dict['ptVeta'][str(iPt)+'_'+str(iEta)].GetStdDev()
+        full_stdev = full_nRT_over_nST_dict['ptVeta'][str(iPt)+'_'+str(iEta)].GetStdDev()
+        fast_nRT_over_nST_ptVeta_BinAverage_TH2.SetBinContent(iPt, iEta, fast_mean)        
+        full_nRT_over_nST_ptVeta_BinAverage_TH2.SetBinContent(iPt, iEta, full_mean)        
+        fast_nRT_over_nST_ptVeta_BinStdev_TH2.SetBinContent(iPt, iEta, fast_stdev)        
+        full_nRT_over_nST_ptVeta_BinStdev_TH2.SetBinContent(iPt, iEta, full_stdev)        
+
 print('Writing histograms to: ' + ofn)
 ofile = ROOT.TFile(ofn, 'recreate')
 for name in ffDiff_RT_TDphi:
@@ -769,6 +855,19 @@ full_ST_maxTptDVmaxTD_TH2.Write()
 
 ffDiff_nRT_TH1.Write()
 ffDiff_nST_TH1.Write()
+
+fast_nRT_over_nST_TH1.Write()
+full_nRT_over_nST_TH1.Write()
+
+fast_nRT_over_nST_phiVeta_BinAverage_TH2.Write()
+full_nRT_over_nST_phiVeta_BinAverage_TH2.Write()
+fast_nRT_over_nST_ptVeta_BinAverage_TH2.Write()
+full_nRT_over_nST_ptVeta_BinAverage_TH2.Write()
+
+fast_nRT_over_nST_phiVeta_BinStdev_TH2.Write()
+full_nRT_over_nST_phiVeta_BinStdev_TH2.Write()
+fast_nRT_over_nST_ptVeta_BinStdev_TH2.Write()
+full_nRT_over_nST_ptVeta_BinStdev_TH2.Write()
 
 print('Closing files')
 if_full.Close()
