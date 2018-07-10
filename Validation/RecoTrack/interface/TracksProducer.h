@@ -8,7 +8,6 @@
 
 #include "DataFormats/Common/interface/ValueMap.h"
 #include "DQMServices/Core/interface/DQMEDAnalyzer.h"
-//#include <DQMServices/Core/interface/DQMStore.h>
 #include "DQMServices/Core/interface/DQMStore.h"
 
 #include "FWCore/Framework/interface/ConsumesCollector.h"
