@@ -71,8 +71,6 @@ def GCP(config, validationDir):
             for IOV_pair in IOVpair_list:
                 ref_IOV  = int(IOV_pair.split('_vs_')[1])
                 comp_IOV = int(IOV_pair.split('_vs_')[0])
-                # workdir for each GCP, alignment pair and IOV pair
-                workDir = "{}/GCP/{}/{}/{}".format(validationDir, comparison, ali_pair, IOV_pair)
                
                 # local config
                 local = {} 
@@ -87,27 +85,38 @@ def GCP(config, validationDir):
                 local["validation"]["IOVcomp"] = comp_IOV
                 local["validation"]["ALIcomp"] = comp_name
 
-                # job info
-                job = {
-                    "name": "GCP_{}_{}_{}".format(comparison, ali_pair, IOV_pair),
-                    "dir": workDir,
-                    "exe": "GCP",
-                    "run-mode": "Condor",
-                    "dependencies": [],
-                    "config": local, 
-                }
-
-                # setup dependancies 
+                # dependancies
+                parents = []
                 for j in jobs:
                     if not comparison in j['name']: continue
                     if not 'Ntuple' in j['name']: continue
                     if ref_name in j['name'] and str(ref_IOV) in j['name']: 
-                        job["dependencies"].append(j['name'])
+                        parents.append(j['name'])
                         local["input_ref"] = j['config']['output']
                     if comp_name in j['name'] and str(comp_IOV) in j['name']: 
-                        job["dependencies"].append(j['name'])
+                        parents.append(j['name'])
                         local["input_comp"] = j['config']['output']
+                
+                # Comparison jobs
+                for step in ['GCPtree', 'GCPcpp', 'GCPpython']:
+                    workDir = "{}/GCP/{}/{}/{}/{}".format(validationDir, comparison, ali_pair, IOV_pair, step)
+                    job = {
+                        "name": "GCP_{}_{}_{}_{}".format(comparison, ali_pair, IOV_pair, step),
+                        "dir": workDir,
+                        "run-mode": "Condor",
+                        "config": local, 
+                    }
+                    if step == 'GCPtree':
+                        job['exe'] = 'cmsRun'
+                        job['cms-config'] = "{}/src/Alignment/OfflineValidation/python/TkAlAllInOneTool/GCP_tree_cfg.py".format(os.environ["CMSSW_BASE"]) 
+                        job['dependencies'] = parents
+                    elif step == 'GCPcpp': 
+                        job['exe'] = 'GCP'
+                        job['dependencies'] = parents + ["GCP_{}_{}_{}_{}".format(comparison, ali_pair, IOV_pair, 'GCPtree')]
+                    else: 
+                        job['exe'] = 'python'
+                        job['dependencies'] = parents + ["GCP_{}_{}_{}_{}".format(comparison, ali_pair, IOV_pair, 'GCPtree')]
 
-                jobs.append(job)
+                    jobs.append(job)
 
     return jobs
