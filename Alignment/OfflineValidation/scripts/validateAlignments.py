@@ -18,7 +18,7 @@ def parser():
     parser.add_argument("-v", "--verbose", action = "store_true", help ="Enable standard output stream")
     parser.add_argument("-e", "--example", action = "store_true", help ="Print example of config in JSON format")
     parser.add_argument("-f", "--force", action = "store_true", help ="Force creation of enviroment, possible overwritten old configuration")
-    parser.add_argument("-j", "--job-flavour", action = "store", default = "longlunch", choices = ["espresso", "microcentury", "longlunch", "workday", "tomorrow", "testmatch", "nextweek"], help ="Job flavours for HTCondor at CERN, default is 'longlunch'")
+    #parser.add_argument("-j", "--job-flavour", action = "store", default = "longlunch", choices = ["espresso", "microcentury", "longlunch", "workday", "tomorrow", "testmatch", "nextweek"], help ="Job flavours for HTCondor at CERN, default is 'longlunch'")
 
     return parser.parse_args()
 
@@ -140,7 +140,9 @@ def main():
                     "error  = condor.err",
                     "log    = condor.log",
                     'requirements = (OpSysAndVer =?= "CentOS7")',
-                    '+JobFlavour = "{}"'.format(args.job_flavour),
+                    #'+JobFlavour = "{}"'.format(args.job_flavour),
+                    #'+JobFlavour = "{}"'.format(args.job_flavour if not 'flavour' in job else job['flavour']),
+                    '+JobFlavour = "{}"'.format('longlunch' if not 'flavour' in job else job['flavour']),
                     '+AccountingGroup = "group_u_CMS.CAF.ALCA"',
                     "queue"
                 ]

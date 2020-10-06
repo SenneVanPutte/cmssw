@@ -22,6 +22,16 @@ options.parseArguments()
 with open(options.config, "r") as configFile:
     config = json.load(configFile)
 
+##Get emptyModuleList.txt
+if 'empty_modules' in config["validation"]["GCP"]:
+    if config["validation"]["GCP"]["empty_modules"].startswith('/store'):
+        os.system('xrdcp root://eoscms//eos/'+config["validation"]["GCP"]["empty_modules"])
+    elif config["validation"]["GCP"]["empty_modules"].startswith('root://'):
+        os.system('xrdcp '+config["validation"]["GCP"]["empty_modules"])
+    else:
+        os.system('cp '+config["validation"]["GCP"]["empty_modules"])
+else: os.system('touch emptyModuleList.txt')
+
 #Global tag
 process.load("Configuration.StandardSequences.FrontierConditions_GlobalTag_cff")
 from Configuration.AlCa.GlobalTag import GlobalTag

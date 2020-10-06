@@ -49,7 +49,7 @@ def GCP(config, validationDir):
                 # local config 
                 local = {}
                 local["output"] = "{}/{}/{}/{}/{}".format(config["LFS"], config["name"], comparison, 'Ntuples', IOV_ali)
-                local["aligment"] = copy.deepcopy(config["alignments"][ali])
+                local["alignments"] = copy.deepcopy(config["alignments"][ali])
                 local["validation"] = {}
                 local["validation"]['GCP'] = copy.deepcopy(config["validations"]["GCP"][comparison])
                 local["validation"]['IOV'] = IOV
@@ -62,7 +62,8 @@ def GCP(config, validationDir):
                     "cms-config": "{}/src/Alignment/OfflineValidation/python/TkAlAllInOneTool/GCP_Ntuples_cfg.py".format(os.environ["CMSSW_BASE"]),
                     "run-mode": "Condor",
                     "dependencies": [],
-                    "config": local, 
+                    "config": local,
+                    "flavour": "espresso", 
                 }
 
                 jobs.append(job)
@@ -75,9 +76,9 @@ def GCP(config, validationDir):
                 # local config
                 local = {} 
                 local["output"] = "{}/{}/{}/{}/{}".format(config["LFS"], config["name"], comparison, ali_pair, IOV_pair)
-                local["aligments"] = {}
-                local["aligments"]["ref"]  = copy.deepcopy(config["alignments"][ref_name])
-                local["aligments"]["comp"] = copy.deepcopy(config["alignments"][comp_name])
+                local["alignments"] = {}
+                local["alignments"]["ref"]  = copy.deepcopy(config["alignments"][ref_name])
+                local["alignments"]["comp"] = copy.deepcopy(config["alignments"][comp_name])
                 local["validation"] = {}
                 local["validation"]['GCP'] = copy.deepcopy(config["validations"]["GCP"][comparison])
                 local["validation"]["IOVref"] = ref_IOV
@@ -105,6 +106,7 @@ def GCP(config, validationDir):
                         "dir": workDir,
                         "run-mode": "Condor",
                         "config": local, 
+                        "flavour": "espresso", 
                     }
                     if step == 'GCPtree':
                         job['exe'] = 'cmsRun'

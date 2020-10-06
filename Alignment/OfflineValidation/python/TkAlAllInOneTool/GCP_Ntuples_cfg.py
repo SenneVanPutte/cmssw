@@ -25,7 +25,7 @@ with open(options.config, "r") as configFile:
 #Global tag
 process.load("Configuration.StandardSequences.FrontierConditions_GlobalTag_cff")
 from Configuration.AlCa.GlobalTag import GlobalTag
-process.GlobalTag = GlobalTag(process.GlobalTag,config["alignment"]["globaltag"])
+process.GlobalTag = GlobalTag(process.GlobalTag,config["alignments"]["globaltag"])
 
 
 process.load("Configuration.Geometry.GeometryRecoDB_cff")
@@ -44,8 +44,9 @@ process.source = cms.Source("EmptySource",
 process.maxEvents = cms.untracked.PSet(
     input = cms.untracked.int32(1)
 )
+print('Output file: '+config["output"]+'/Ntuples.root')
 process.dump = cms.EDAnalyzer("TrackerGeometryIntoNtuples",
-    outputFile = cms.untracked.string('Ntuples.root'),
+    outputFile = cms.untracked.string(str(config["output"]+'/Ntuples.root')),
     outputTreename = cms.untracked.string('alignTree')
 )
 
